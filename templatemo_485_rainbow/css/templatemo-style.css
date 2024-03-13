@@ -50,6 +50,17 @@ a:focus,
 	outline: none;
 }
 
+#tmNavbar {
+	background: rgba(241, 227, 191, 0.4);
+	border-radius: 16px;
+	box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+	backdrop-filter: blur(3px);
+	-webkit-backdrop-filter: blur(3px);
+
+	border: 2px solid rgba(227, 211, 167, 0.8);
+	@apply w-full sm:w-fit mx-auto;
+}
+
 .container { max-width: 1040px; }
 
 /* Sticky header
@@ -694,7 +705,12 @@ textarea.form-control {
 
 .flex{
 	display: flex;
-	justify-content: space-between;
+}
+.separator {
+	width: 90%;
+	height: 2px; /* Hauteur de la barre de séparation */
+	background-color: #000; /* Couleur de la barre de séparation */
+	margin: 20px auto; /* Marge au-dessus et en dessous de la barre de séparation, et marges automatiques à gauche et à droite */
 }
 .taille50{
 	width: 47%;
@@ -739,6 +755,10 @@ textarea.form-control {
 .align-item-right{
 	align-items: flex-end;
 }
+.marge{
+	margin-left: 10%;
+	margin-right: 10%;
+}
 .overflow{
 	overflow: hidden;
 	border-radius: 10px;
@@ -771,7 +791,7 @@ textarea.form-control {
 	height: 100%;
 }
 .widthlong{
-	width: 480px;
+	width: 430px;
 	height: 215px;
 }
 .d480200{
@@ -805,9 +825,18 @@ textarea.form-control {
 	text-align: center;
 }
 .cardgrid{
-	@apply shadow-lg border-2 p-4 w-3/4 h-[130px] rounded-md flex-col justify-center bg-orange-200 ;
+	@apply shadow-lg border-2 p-1 md:p-8 w-full flex-col justify-center flex justify-center items-center text-center backdrop-blur-xl hover:backdrop-blur-2xl bg-white/20 hover:bg-white/40 duration-300 ease-out hover:border-white hover:shadow-2xl hover:scale-[105%];
+	opacity: 0;
+
+}
+
+.cardgrid > img {
+	@apply drop-shadow-lg hover:drop-shadow-2xl;
 }
 
 h4 {
 	@apply font-bold;
+}
+.largeur000{
+	width: 255px;
 }
