@@ -9,7 +9,10 @@ http://www.templatemo.com/tm-485-rainbow
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+html {
+	overflow-x: hidden;
+	background-color: #dfd2a6;
+}
 body {
 	color: #64572a;
 	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
@@ -840,3 +843,4 @@ h4 {
 .largeur000{
 	width: 255px;
 }
+
