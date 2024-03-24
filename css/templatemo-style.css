@@ -61,7 +61,7 @@ a:focus,
 	-webkit-backdrop-filter: blur(3px);
 
 	border: 2px solid rgba(227, 211, 167, 0.8);
-	@apply w-full sm:w-fit mx-auto;
+	@apply w-fit mx-auto;
 }
 
 .container { max-width: 1040px; }
@@ -817,6 +817,7 @@ textarea.form-control {
 .center{
 	justify-content: center;
 	text-align: center;
+	perspective: 1200px;
 }
 .souligne{
 	text-decoration: underline;
@@ -830,7 +831,6 @@ textarea.form-control {
 .cardgrid{
 	@apply shadow-lg border-2 p-1 md:p-8 w-full flex-col justify-center flex justify-center items-center text-center backdrop-blur-xl hover:backdrop-blur-2xl bg-white/20 hover:bg-white/40 duration-300 ease-out hover:border-white hover:shadow-2xl hover:scale-[105%];
 	opacity: 0;
-
 }
 
 .cardgrid > img {
@@ -843,4 +843,5 @@ h4 {
 .largeur000{
 	width: 255px;
 }
+
 

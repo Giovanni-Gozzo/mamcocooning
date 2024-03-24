@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -73,34 +74,34 @@
             </section>
         </div>
         <div class="sm:max-w-[69%] sm:w-full mx-auto p-8 mt-8 gap-2 mb-5 top-0 grid grid-cols-2 sm:grid-cols-3 overflow-y-scroll hide-scrollbar place-content-center">
-            <div class="cardgrid rounded-tl-xl">
+            <div class="cardgrid rounded-tl-xl" onclick="ajouterActivite('Manuelle')">
                 <img src="img/activite/Remove%20Background.png" alt="Image 1" class="taille40">
                 <h4>Activité manuelle</h4>
             </div>
 
-            <div class="cardgrid max-sm:rounded-tr-xl">
+            <div class="cardgrid max-sm:rounded-tr-xl" onclick="ajouterActivite('Musique')">
                 <img class="taille30" src="img/activite/Instruments.png" alt="Image 2">
                 <h4>Musique</h4>
             </div>
 
-            <div class="cardgrid sm:rounded-tr-xl">
+            <div class="cardgrid sm:rounded-tr-xl" onclick="ajouterActivite('Motricite')">
                 <img class="taille50" src="img/activite/Motricité%20background%20from%20Mamcocooning.png" alt="Image 3">
                 <h4>Motricité</h4>
             </div>
-            <div class=" cardgrid">
+            <div class=" cardgrid" onclick="ajouterActivite('anglais')">
                 <img class="taille50" src="img/activite/Drape%20removebg%20preview.png" alt="Image 4">
                 <h4>Notion d'anglais</h4>
             </div>
 
-            <div class=" cardgrid">
+            <div class=" cardgrid" onclick="ajouterActivite('jardin')">
                 <img class="taille30" src="img/activite/Doodle%20petit%20jardinier%20Mamcocooning.png" alt="Image 5">
                 <h4>Jardinage</h4>
             </div>
-            <div class=" cardgrid">
+            <div class=" cardgrid" onclick="ajouterActivite('Lecture')">
                 <img class="taille30" src="img/activite/Book%20PNG%20removebg-preview.png" alt="Image 6">
                 <h4>Lecture</h4>
             </div>
-            <div class=" cardgrid rounded-b-xl col-span-2 sm:col-span-3">
+            <div class=" cardgrid rounded-b-xl col-span-2 sm:col-span-3" onclick="ajouterActivite('patisserie')">
                 <img class="w-[5%]" src="img/activite/Mamcocooning%20Dessin%20Patisserie.png" alt="Image 8">
                 <h4>Patisserie</h4>
             </div>
@@ -117,9 +118,14 @@
         </div>
         <div class="separator"></div>
 
+
+
         <div class="flex justify-center">
         <h1 class="tm-site-title !text-black !mt-0">Les activités</h1>
         </div>
+
+
+        <!--
         <div class="w-full sm:w-2/3 mx-auto m-t-3 m-b-3">
             <div class="grid grid-rows-10 grid-flow-col place-items-center grid-cols-3 gap-2">
                 <div class="row-start-2 row-span-2 flex justify-end">
@@ -170,7 +176,7 @@
             </div>
         </div>
 
-
+-->
 
 
 
@@ -199,5 +205,12 @@
     }
     // Appeler la fonction pour afficher les cartes avec un délai
     showCardsWithDelay();
+    function ajouterActivite(nomActivite) {
+        // Construire la nouvelle URL avec le paramètre d'activité
+        const nouvelleUrl = new URL(window.location.href);
+        nouvelleUrl.searchParams.set('activite', nomActivite);
 
+        // Naviguer vers la nouvelle URL
+        window.location.href = nouvelleUrl.href;
+    }
 </script>
