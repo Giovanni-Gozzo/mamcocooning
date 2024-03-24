@@ -65,7 +65,7 @@
 .author-info a {
     color: white;
 }
-img {
+.slider img {
     border-radius: 50px;
     object-fit: cover;
     position: absolute;
@@ -95,4 +95,25 @@ img {
 }
 
 
+
+@media (max-width: 700px) {
+    .slider {
+        width: 100%;
+    }
+    .slides > div {
+        width: 100%;
+        height: 300px;
+    }
+}
+
+.img-border {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 1.5s ease-out, transform 1.5s ease-out;
+}
+
+.img-border.visible {
+    opacity: 1;
+    transform: none;
+}
 

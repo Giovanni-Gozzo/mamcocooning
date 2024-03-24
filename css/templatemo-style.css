@@ -12,6 +12,7 @@ http://www.templatemo.com/tm-485-rainbow
 html {
 	overflow-x: hidden;
 	background-color: #dfd2a6;
+	scroll-behavior: smooth;
 }
 body {
 	color: #64572a;
@@ -843,5 +844,7 @@ h4 {
 .largeur000{
 	width: 255px;
 }
+
+
 
 

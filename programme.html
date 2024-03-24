@@ -74,116 +74,184 @@
             </section>
         </div>
         <div class="sm:max-w-[69%] sm:w-full mx-auto p-8 mt-8 gap-2 mb-5 top-0 grid grid-cols-2 sm:grid-cols-3 overflow-y-scroll hide-scrollbar place-content-center">
-            <div class="cardgrid rounded-tl-xl" onclick="ajouterActivite('Manuelle')">
+            <div class="cardgrid rounded-tl-xl">
                 <img src="img/activite/Remove%20Background.png" alt="Image 1" class="taille40">
                 <h4>Activité manuelle</h4>
             </div>
 
-            <div class="cardgrid max-sm:rounded-tr-xl" onclick="ajouterActivite('Musique')">
+            <div class="cardgrid max-sm:rounded-tr-xl" >
                 <img class="taille30" src="img/activite/Instruments.png" alt="Image 2">
                 <h4>Musique</h4>
             </div>
 
-            <div class="cardgrid sm:rounded-tr-xl" onclick="ajouterActivite('Motricite')">
+            <div class="cardgrid sm:rounded-tr-xl" >
                 <img class="taille50" src="img/activite/Motricité%20background%20from%20Mamcocooning.png" alt="Image 3">
                 <h4>Motricité</h4>
             </div>
-            <div class=" cardgrid" onclick="ajouterActivite('anglais')">
+            <div class=" cardgrid" >
                 <img class="taille50" src="img/activite/Drape%20removebg%20preview.png" alt="Image 4">
                 <h4>Notion d'anglais</h4>
             </div>
 
-            <div class=" cardgrid" onclick="ajouterActivite('jardin')">
+            <div class="cardgrid" >
                 <img class="taille30" src="img/activite/Doodle%20petit%20jardinier%20Mamcocooning.png" alt="Image 5">
                 <h4>Jardinage</h4>
             </div>
-            <div class=" cardgrid" onclick="ajouterActivite('Lecture')">
+            <div class=" cardgrid" >
                 <img class="taille30" src="img/activite/Book%20PNG%20removebg-preview.png" alt="Image 6">
                 <h4>Lecture</h4>
             </div>
-            <div class=" cardgrid rounded-b-xl col-span-2 sm:col-span-3" onclick="ajouterActivite('patisserie')">
+            <div class=" cardgrid rounded-b-xl col-span-2 sm:col-span-3" >
                 <img class="w-[5%]" src="img/activite/Mamcocooning%20Dessin%20Patisserie.png" alt="Image 8">
                 <h4>Patisserie</h4>
             </div>
         </div>
+
         <div class="flex flex-col sm:flex-row justify-center marge">
             <div class="overflow mx-auto w-[80%] sm:w-[40%] w-1/3">
-                <img src="img/image0000031%204.JPG" alt="iuh" class="img-border taille100 ">
+                <img id="am" src="img/image0000031%204.JPG" alt="iuh" class="img-border taille100 ">
+                <img id="m" src="img/activite/image0000001.png" alt="Image 2" class="img-border taille100 hidden">
             </div>
             <div class="flex flex-col w-full sm:w-2/3 mx-auto sm:p-8">
                 <img src="img/activite/Remove%20Background%20Image.png" alt="Image 1" class="taille30 mx-auto">
+
                 <h4 class="text-center m-b-2 souligne">Enfants</h4>
-                <p class="text-lg-center sm:p-8 text-left">"Notre MAM offre aux enfants un environnement stimulant pour favoriser leur développement harmonieux et leur épanouissement. Avec une équipe d'assistantes maternelles qualifiées, nous proposons des activités adaptées à chaque âge, encourageant l'exploration, l'apprentissage et la croissance individuelle. Nous valorisons une communication ouverte avec les parents pour établir un lien de confiance solide. Chez nous, chaque enfant se sent en sécurité, aimé et peut s'épanouir pleinement."</p>
+                <p class="text-lg-center sm:p-8 text-left">"Notre MAM offre aux enfants un environnement stimulant pour favoriser leur développement harmonieux et leur épanouissement. Nous proposons des activités adaptées à chaque âge, encourageant l'exploration, l'apprentissage et la croissance individuelle."</p>
             </div>
         </div>
         <div class="separator"></div>
 
 
 
-        <div class="flex justify-center">
-        <h1 class="tm-site-title !text-black !mt-0">Les activités</h1>
+        <div id="les-activités" class="flex justify-center ">
+            <h1 id="act" class="tm-site-title !text-black !mt-0">Les activités</h1>
         </div>
 
-
-        <!--
-        <div class="w-full sm:w-2/3 mx-auto m-t-3 m-b-3">
-            <div class="grid grid-rows-10 grid-flow-col place-items-center grid-cols-3 gap-2">
-                <div class="row-start-2 row-span-2 flex justify-end">
-                    <img src="img/activite/image0000001%204.JPG" alt="Image 2" class="taille100 rounded-lg">
-                </div>
-                <div class="row-start-4 row-span-2 flex justify-end">
-                    <img src="img/activite/image0000001%206.JPG" alt="image3" class="taille100 rounded-lg">
-                </div>
-                <div class="row-start-6 row-span-2 flex justify-end">
-                    <img src="img/activite/image0000031.JPG" alt="Image 4" class="taille100 rounded-lg">
-                </div>
-                <div class="row-start-8 row-span-2 flex justify-end">
-                    <img src="img/activite/image0000071.JPG" alt="Image 4" class="taille100 rounded-lg">
-                </div>
-
-
-                <div class="row-end-3 row-span-2 flex justify-center items-center">
-                    <img src="img/activite/image0000001%203.JPG" alt="Image 1" class="taille100 rounded-lg">
-                </div>
-                <div class="row-start-3 row-end-5 flex justify-center items-center">
-                    <img src="img/activite/image0000011%204%202.JPG" alt="Nouvelle Image" class="taille100 rounded-lg">
-                </div>
-                <div class="row-start-5 row-span-2 flex justify-center items-center">
-                    <img src="img/activite/image0000011%204.JPG" alt="Image 3" class="taille100 rounded-lg">
-                </div>
-                <div class="row-start-7 row-span-2 flex justify-center items-center">
-                    <img src="img/activite/image0000041.JPG" alt="Image 3" class="taille100 rounded-lg">
-                </div>
-                <div class="row-start-9 row-span-2 flex justify-center items-center">
-                    <img src="img/activite/image0000081.JPG" alt="Image 4" class="taille100 rounded-lg">
-                </div>
+        <div id="noactivit" class="flex text-center justify-center">
+        <div class="flex text-center w-[70%] justify-center">
+            <h4>
+                Aucune activité choisi pour le moment cliquez sur les activités au dessus pour voir les photos correspondante
+            </h4>
+        </div>
+        </div>
+        <div id="activité manuelle" class="hidden">
+            <div class="w-full sm:w-2/3 mx-auto m-t-3 m-b-3">
+                <div class="grid grid-rows-14 grid-flow-col place-items-center grid-cols-3 gap-2">
+                    <div class="row-start-2 row-span-2 flex justify-end">
+                        <img src="img/activite/manuel/image0000001.jpg" alt="Image 2" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-4 row-span-2 flex justify-end">
+                        <img src="img/activite/manuel/image0000001%20copie.jpg" alt="image3" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-6 row-span-2 flex justify-end">
+                        <img src="img/activite/manuel/image0000001%203.jpg" alt="Image 4" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-8 row-span-2 flex justify-end">
+                        <img src="img/activite/manuel/image0000001%204.jpg" alt="Image 4" class="taille100 rounded-lg">
+                    </div>
 
 
-                <div class="row-start-2 row-span-2 flex justify-center items-center">
-                    <img src="img/activite/image0000001%205.JPG" alt="Image 3" class="taille100 rounded-lg">
-                </div>
-                <div class="row-start-4 row-span-2 flex justify-center items-center">
-                    <img src="img/activite/image0000001%209.JPG" alt="Image 4" class="taille100 rounded-lg">
-                </div>
-                <div class="row-start-6 row-span-2 flex justify-center items-center">
-                    <img src="img/activite/image0000061.JPG" alt="Image 4" class="taille100 rounded-lg">
-                </div>
-                <div class="row-start-8 row-span-2 flex justify-center items-center">
-                    <img src="img/activite/image0000091.JPG" alt="Image 4" class="taille100 rounded-lg">
-                </div>
+                    <div class="row-end-3 row-span-2 flex justify-center items-center">
+                        <img src="img/activite/manuel/image0000001%205.jpg" alt="Image 1" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-3 row-end-5 flex justify-center items-center">
+                        <img src="img/activite/manuel/image0000011.jpg" alt="Nouvelle Image" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-5 row-span-2 flex justify-center items-center">
+                        <img src="img/activite/manuel/image0000011%20copie%202.jpg" alt="Image 3" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-7 row-span-2 flex justify-center items-center">
+                        <img src="img/activite/manuel/image0000011%203.jpg" alt="Image 3" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-9 row-span-2 flex justify-center items-center">
+                        <img src="img/activite/manuel/image0000011%204.jpg" alt="Image 4" class="taille100 rounded-lg">
+                    </div>
 
 
+
+                    <div class="row-start-2 row-span-2 flex justify-center items-center">
+                        <img src="img/activite/manuel/image0000021%20copie.jpg" alt="Image 3" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-4 row-span-2 flex justify-center items-center">
+                        <img src="img/activite/manuel/image0000021%202.jpg" alt="Image 4" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-6 row-span-2 flex justify-center items-center">
+                        <img src="img/activite/manuel/image0000021%204.jpg" alt="Image 4" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-8 row-span-2 flex justify-center items-center">
+                        <img src="img/activite/manuel/image0000031%205.jpg" alt="Image 4" class="taille100 rounded-lg">
+                    </div>
+
+
+                    </div>
             </div>
         </div>
+        <div id="musique" class="hidden">
+            <div class="w-full sm:w-2/3 mx-auto m-t-3 m-b-3">
+                <div class="grid grid-rows-5 grid-flow-col place-items-center grid-cols-3 gap-2">
+                    <div class="row-start-2 row-span-2 flex justify-end">
+                        <img src="img/activite/musique/image0000001.jpg" alt="Image 2" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-4 row-span-2 flex justify-end">
+                        <img src="img/activite/musique/image0000011.jpg" alt="image3" class="taille100 rounded-lg">
+                    </div>
 
--->
+                    <div class="row-end-3 row-span-2 flex justify-center items-center">
+                        <img src="img/activite/musique/image0000021.jpg" alt="Image 1" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-3 row-end-5 flex justify-center items-center">
+                        <img src="img/activite/musique/image0000031.jpg" alt="Nouvelle Image" class="taille100 rounded-lg">
+                    </div>
 
-
+                    <div class="row-start-2 row-span-2 flex justify-center items-center">
+                        <img src="img/activite/musique/image0000041.jpg" alt="Image 3" class="taille100 rounded-lg">
+                    </div>
+                    <div class="row-start-4 row-span-2 flex justify-center items-center">
+                        <img src="img/activite/musique/image0000051.jpg" alt="Image 4" class="taille100 rounded-lg">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="motricité" class="hidden">
+            <div class="flex text-center justify-center">
+            <h4>
+                Pas encore de photo dans la catégorie Motricité
+            </h4>
+            </div>
+        </div>
+        <div id="notion d'anglais" class="hidden">
+            <div class="flex text-center justify-center">
+            <h4>
+                Pas encore de photo dans la catégorie Anglais
+            </h4>
+            </div>
+        </div>
+        <div id="jardinage" class="hidden">
+            <div class="flex text-center justify-center">
+            <h4>
+                Pas encore de photo dans la catégorie Jardinage
+            </h4>
+            </div>
+        </div>
+        <div id="lecture" class="hidden">
+            <div class="flex text-center justify-center">
+            <h4>
+                Pas encore de photo dans la catégorie Lecture
+            </h4>
+            </div>
+        </div>
+        <div id="patisserie" class="hidden">
+            <div class="flex text-center justify-center">
+            <h4>
+                Pas encore de photo dans la catégorie Patisserie
+            </h4>
+            </div>
+        </div>
 
     </div>
 </div>
 
-<footer class="tm-bg-img-footer col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 text-xs-center ">
+<footer class="tm-bg-img-footer col-xs-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 text-xs-center mt-9">
     <p class="tm-copyright-text">Créé par Giovanni Gozzo </p>
 </footer>
 
@@ -205,12 +273,53 @@
     }
     // Appeler la fonction pour afficher les cartes avec un délai
     showCardsWithDelay();
-    function ajouterActivite(nomActivite) {
-        // Construire la nouvelle URL avec le paramètre d'activité
-        const nouvelleUrl = new URL(window.location.href);
-        nouvelleUrl.searchParams.set('activite', nomActivite);
 
-        // Naviguer vers la nouvelle URL
-        window.location.href = nouvelleUrl.href;
-    }
+    const cardgrids = document.querySelectorAll('.cardgrid');
+
+
+    const ids = ['noactivit','activité manuelle','musique','motricité',"notion d'anglais",'jardinage','lecture','patisserie'];
+
+    cardgrids.forEach(cardgrid => {
+        cardgrid.addEventListener('click', function() {
+            // Hide all elements
+            ids.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.display = 'none';
+                }
+            });
+
+            const h4Text = this.querySelector('h4').textContent.toLowerCase();
+            if(h4Text === 'motricité'){
+                const imgmotricité = document.getElementById('m');
+                imgmotricité.style.display = 'block';
+                const imgam = document.getElementById('am');
+                imgam.style.display = 'none';
+            }
+            const lesactivités = document.getElementById('act');
+            const txt= h4Text.charAt(0).toUpperCase() + h4Text.slice(1);
+            lesactivités.textContent = txt;
+            if (ids.includes(h4Text)) {
+                const elementToShow = document.getElementById(h4Text);
+                if (elementToShow) {
+                    elementToShow.style.display = 'block';
+                }
+            }
+        });
+    });
+    document.querySelectorAll('.cardgrid').forEach(card => {
+        card.addEventListener('click', function() {
+            const activityName = this.querySelector('h4').textContent.trim();
+
+            const anchor = activityName.toLowerCase().replace(/\s+/g, '-');
+
+            const destinationURL = `#les-activités`;
+
+            window.location.href = destinationURL;
+
+
+        });
+    });
+
+
 </script>
