@@ -37,7 +37,7 @@ export default function ContactPage() {
           eyebrow="Contact"
           title="Passez nous voir"
           level="h1"
-          body="Le plus simple reste un appel : on convient ensemble d'un moment pour vous faire visiter, enfant compris."
+          body="Un appel, et on convient ensemble d'un moment pour vous faire visiter, enfant compris. Pas de formulaire, pas d'attente."
         />
 
         <div className="mt-14 grid gap-4 sm:grid-cols-3">

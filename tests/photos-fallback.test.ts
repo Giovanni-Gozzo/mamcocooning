@@ -52,6 +52,17 @@ describe('listPhotos without a database', () => {
 
     expect(photos.length).toBeLessThanOrEqual(LEGACY_PHOTOS.length)
   })
+
+  // A client-component export read from a Server Component arrives as a proxy,
+  // and Math.trunc(proxy) is NaN — which used to empty the whole gallery.
+  test('falls back to the default limit when the limit is not a finite number', async () => {
+    const nonFinite = [Number.NaN, Number.POSITIVE_INFINITY, undefined] as const
+
+    for (const limit of nonFinite) {
+      const photos = await listPhotos({ limit: limit as number | undefined })
+      expect(photos.length).toBeGreaterThan(0)
+    }
+  })
 })
 
 describe('listCategoriesWithCounts without a database', () => {

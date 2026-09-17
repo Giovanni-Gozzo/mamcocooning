@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { GalleryGrid } from '@/components/gallery/GalleryGrid'
 import { SectionTitle } from '@/components/ui/SectionTitle'
+import { GALLERY_PAGE_SIZE } from '@/lib/gallery'
 import { listCategoriesWithCounts, listPhotos } from '@/lib/photos'
 
 export const revalidate = 120
@@ -16,13 +17,15 @@ interface GalleryPageProps {
 }
 
 export default async function GalleryPage({ searchParams }: GalleryPageProps) {
-  const [{ categorie }, categories, photos] = await Promise.all([
-    searchParams,
-    listCategoriesWithCounts(),
-    listPhotos({ limit: 400 }),
-  ])
+  const [{ categorie }, categories] = await Promise.all([searchParams, listCategoriesWithCounts()])
 
+  // The first page must already be scoped, otherwise a shared /galerie?categorie=…
+  // link renders every photo behind an active filter.
   const requested = categories.find((category) => category.slug === categorie)
+  const photos = await listPhotos({
+    categorySlug: requested?.slug,
+    limit: GALLERY_PAGE_SIZE,
+  })
 
   return (
     <div className="grain relative overflow-hidden px-6 pt-36 pb-10 sm:pt-44">
@@ -41,7 +44,7 @@ export default async function GalleryPage({ searchParams }: GalleryPageProps) {
 
         <div className="mt-14">
           <GalleryGrid
-            photos={photos}
+            initialPhotos={photos}
             categories={categories}
             initialCategory={requested?.slug ?? null}
           />

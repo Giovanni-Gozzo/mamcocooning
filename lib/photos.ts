@@ -42,8 +42,10 @@ function toPhoto(row: PhotoRow): Photo {
 }
 
 function clampLimit(limit: number | undefined): number {
-  if (limit === undefined) return DEFAULT_LIMIT
-  return Math.min(Math.max(1, Math.trunc(limit)), MAX_LIMIT)
+  // A non-finite limit would turn slice(0, NaN) into an empty gallery, so it
+  // falls back to the default rather than silently hiding every photo.
+  if (limit === undefined || !Number.isFinite(Number(limit))) return DEFAULT_LIMIT
+  return Math.min(Math.max(1, Math.trunc(Number(limit))), MAX_LIMIT)
 }
 
 function filterFallback(query: PhotoQuery): readonly Photo[] {

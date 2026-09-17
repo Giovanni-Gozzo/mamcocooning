@@ -1,11 +1,25 @@
+import Image from 'next/image'
 import Link from 'next/link'
+import { CloudDivider } from '@/components/ui/CloudDivider'
 import { NAV_LINKS, SITE } from '@/lib/site'
 
 export function Footer() {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="grain relative mt-24 overflow-hidden bg-sand pt-20 pb-[max(2rem,env(safe-area-inset-bottom))]">
+    <footer className="grain relative mt-24 overflow-hidden bg-sand pt-24 pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <div className="absolute inset-x-0 top-0 rotate-180">
+        <CloudDivider className="text-cream" />
+      </div>
+
+      <Image
+        aria-hidden
+        src="/img/Écureuil removebg preview.png"
+        alt=""
+        width={180}
+        height={180}
+        className="animate-gentle-float pointer-events-none absolute right-4 bottom-16 w-24 opacity-90 sm:right-10 sm:w-32"
+      />
       <div
         aria-hidden
         className="animate-blob-drift absolute -top-24 -right-20 size-72 bg-terracotta-soft/60 blur-3xl"

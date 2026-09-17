@@ -3,7 +3,7 @@ import Image from 'next/image'
 import { ButtonLink } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { SectionTitle } from '@/components/ui/SectionTitle'
-import { TEAM, type TeamMember } from '@/lib/site'
+import { SITE, TEAM, type TeamMember } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'L’équipe',
@@ -43,7 +43,7 @@ export default function TeamPage() {
               consultables sur place, et nous répondons volontiers à toutes vos questions.
             </p>
             <div className="mt-8">
-              <ButtonLink href="/contact">Prendre rendez-vous</ButtonLink>
+              <ButtonLink href={`tel:${SITE.phoneHref}`}>Appelez-nous</ButtonLink>
             </div>
           </div>
         </Reveal>

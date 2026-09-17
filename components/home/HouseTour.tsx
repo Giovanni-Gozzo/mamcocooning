@@ -1,64 +1,94 @@
 'use client'
 
 import Image from 'next/image'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { motion } from 'motion/react'
+import { useCallback, useEffect, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { FloatingJungle, type JungleSpec } from '@/components/ui/FloatingJungle'
 import { SectionTitle } from '@/components/ui/SectionTitle'
 import { HOUSE_TOUR } from '@/lib/site'
 
-const SCROLL_STEP_RATIO = 0.82
+const SCENE_JUNGLE: readonly JungleSpec[] = [
+  { name: 'monstera', className: 'left-[1%] bottom-[6%] hidden w-24 lg:block', color: 'text-jungle/20', tilt: -10 },
+  { name: 'giraffe', className: 'left-[5%] top-[18%] hidden w-16 xl:block', color: 'text-honey/55', tilt: 6, delay: '-2s' },
+  { name: 'palmLeaf', className: 'right-[1%] bottom-[8%] hidden w-24 lg:block', color: 'text-leaf/30', tilt: 12, delay: '-4s' },
+  { name: 'monkey', className: 'right-[5%] top-[20%] hidden w-14 xl:block', color: 'text-clay', tilt: -8, delay: '-1s' },
+]
 
-/** The rail is inset, and scroll-snap aligns cards to that inset, not to 0. */
-function scrollInset(rail: HTMLElement): number {
-  return Number.parseFloat(getComputedStyle(rail).scrollPaddingLeft) || 0
+/** Cards further than this from the active one are not rendered at all. */
+const VISIBLE_NEIGHBOURS = 2
+const SWIPE_THRESHOLD_PX = 60
+
+interface CardTransform {
+  readonly x: string
+  readonly rotateY: number
+  readonly z: number
+  readonly scale: number
+  readonly opacity: number
+  readonly zIndex: number
+}
+
+/** Places a card on an arc around the viewer, based on its distance from centre. */
+function transformFor(offset: number, isFlat: boolean): CardTransform {
+  const distance = Math.abs(offset)
+  const direction = Math.sign(offset)
+
+  if (isFlat) {
+    return {
+      x: `${offset * 100}%`,
+      rotateY: 0,
+      z: 0,
+      scale: 1,
+      opacity: distance === 0 ? 1 : 0,
+      zIndex: 10 - distance,
+    }
+  }
+
+  return {
+    x: `${direction * (38 + (distance - 1) * 26)}%`,
+    rotateY: -direction * 34,
+    z: -distance * 170,
+    scale: 1 - distance * 0.08,
+    opacity: 1 - distance * 0.22,
+    zIndex: 10 - distance,
+  }
+}
+
+/** Shortest signed distance between two cards on a loop, e.g. 8 -> 0 is +1. */
+function wrappedOffset(index: number, activeIndex: number, total: number): number {
+  const half = Math.floor(total / 2)
+  return (((index - activeIndex + half + total) % total) - half)
 }
 
 export function HouseTour() {
-  const railRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(true)
+  const prefersReducedMotion = useReducedMotion() ?? false
+  const total = HOUSE_TOUR.length
 
-  /** Reads real card positions: the rail is padded, so an average width lies. */
-  const syncFromScroll = useCallback(() => {
-    const rail = railRef.current
-    if (rail === null) return
+  const goTo = useCallback((index: number) => setActiveIndex(((index % total) + total) % total), [total])
 
-    const cards = [...rail.querySelectorAll('figure')]
-    const target = rail.scrollLeft + scrollInset(rail)
-    const nearest = cards.reduce(
-      (best, card, index) =>
-        Math.abs(card.offsetLeft - target) < best.distance
-          ? { index, distance: Math.abs(card.offsetLeft - target) }
-          : best,
-      { index: 0, distance: Number.POSITIVE_INFINITY },
-    )
-
-    setActiveIndex(nearest.index)
-    setCanScrollLeft(rail.scrollLeft > 8)
-    setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 8)
-  }, [])
+  const step = useCallback(
+    (delta: number) => setActiveIndex((current) => (current + delta + total) % total),
+    [total],
+  )
 
   useEffect(() => {
-    syncFromScroll()
-  }, [syncFromScroll])
+    function handleKey(event: KeyboardEvent) {
+      const stage = document.getElementById('visite-scene')
+      if (stage === null || !stage.contains(document.activeElement)) return
+      if (event.key === 'ArrowRight') step(1)
+      if (event.key === 'ArrowLeft') step(-1)
+    }
 
-  function scrollByStep(direction: -1 | 1) {
-    const rail = railRef.current
-    if (rail === null) return
-    rail.scrollBy({ left: direction * rail.clientWidth * SCROLL_STEP_RATIO, behavior: 'smooth' })
-  }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [step])
 
-  function scrollToIndex(index: number) {
-    const rail = railRef.current
-    const card = rail?.querySelectorAll('figure')[index]
-    if (rail === null || card === undefined) return
-
-    rail.scrollTo({ left: card.offsetLeft - scrollInset(rail), behavior: 'smooth' })
-  }
+  const activeStop = HOUSE_TOUR[activeIndex]
 
   return (
-    <section className="mt-28 overflow-hidden">
+    <section className="relative mt-28 overflow-hidden">
+      <FloatingJungle items={SCENE_JUNGLE} />
+
       <div className="mx-auto max-w-6xl px-6">
         <SectionTitle
           eyebrow="La visite"
@@ -67,92 +97,126 @@ export function HouseTour() {
         />
       </div>
 
-      <div className="relative mt-12">
-        <div
-          ref={railRef}
-          onScroll={syncFromScroll}
-          tabIndex={0}
-          role="group"
-          aria-label="Visite de la maison, faites défiler horizontalement"
-          className="no-scrollbar flex snap-x snap-mandatory scroll-pl-6 gap-5 overflow-x-auto scroll-smooth px-6 pb-4 lg:scroll-pl-[max(1.5rem,calc((100vw-72rem)/2))] lg:px-[max(1.5rem,calc((100vw-72rem)/2))]"
-        >
-          {HOUSE_TOUR.map((stop, index) => (
-            <motion.figure
-              key={stop.image}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.7, delay: Math.min(index, 3) * 0.07 }}
-              className="group relative w-[78vw] shrink-0 snap-start sm:w-[46vw] lg:w-[30rem]"
-            >
-              <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-sand ring-1 ring-clay/40">
-                <Image
-                  src={stop.image}
-                  alt={stop.title}
-                  fill
-                  sizes="(max-width: 640px) 78vw, (max-width: 1024px) 46vw, 30rem"
-                  className="object-cover transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.06]"
-                />
-                <span className="absolute top-4 left-4 rounded-full bg-cream/90 px-3 py-1 text-xs font-bold tracking-wider text-terracotta-deep backdrop-blur">
-                  {String(index + 1).padStart(2, '0')} / {HOUSE_TOUR.length}
-                </span>
-              </div>
-              <figcaption className="px-1 pt-5">
-                <h3 className="text-xl">{stop.title}</h3>
-                <p className="mt-2 leading-relaxed text-ink-soft">{stop.body}</p>
-              </figcaption>
-            </motion.figure>
-          ))}
-        </div>
+      <div
+        id="visite-scene"
+        tabIndex={0}
+        role="group"
+        aria-roledescription="carrousel"
+        aria-label="Visite de la maison"
+        className="relative mx-auto mt-14 h-[clamp(17rem,42vw,26rem)] w-full max-w-5xl rounded-3xl outline-offset-8"
+        style={{ perspective: '1500px', transformStyle: 'preserve-3d' }}
+      >
+        {HOUSE_TOUR.map((stop, index) => {
+          const offset = wrappedOffset(index, activeIndex, total)
+          if (Math.abs(offset) > VISIBLE_NEIGHBOURS) return null
 
-        <div className="mx-auto mt-8 flex max-w-6xl items-center justify-between gap-6 px-6">
-          <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Aller à une pièce">
+          const placement = transformFor(offset, prefersReducedMotion)
+          const isActive = offset === 0
+
+          return (
+            <motion.button
+              key={stop.image}
+              type="button"
+              aria-label={isActive ? undefined : `Voir ${stop.title}`}
+              aria-hidden={placement.opacity === 0}
+              tabIndex={isActive ? -1 : 0}
+              onClick={() => goTo(index)}
+              drag={isActive ? 'x' : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.14}
+              onDragEnd={(_event, info) => {
+                if (info.offset.x < -SWIPE_THRESHOLD_PX) step(1)
+                if (info.offset.x > SWIPE_THRESHOLD_PX) step(-1)
+              }}
+              animate={{
+                x: placement.x,
+                rotateY: placement.rotateY,
+                z: placement.z,
+                scale: placement.scale,
+                opacity: placement.opacity,
+              }}
+              transition={{ type: 'spring', stiffness: 170, damping: 26, mass: 0.9 }}
+              style={{
+                zIndex: placement.zIndex,
+                transformStyle: 'preserve-3d',
+                cursor: isActive ? 'grab' : 'pointer',
+              }}
+              className="absolute top-0 left-1/2 h-full w-[76%] -translate-x-1/2 overflow-hidden rounded-[2rem] bg-sand shadow-[0_40px_80px_-40px_rgba(56,45,40,0.75)] ring-1 ring-clay/40 sm:w-[58%]"
+            >
+              <Image
+                src={stop.image}
+                alt={stop.title}
+                fill
+                sizes="(max-width: 640px) 76vw, 36rem"
+                className="pointer-events-none object-cover"
+                priority={index < 3}
+                draggable={false}
+              />
+
+              <span
+                aria-hidden
+                className={`absolute inset-0 bg-ink/45 transition-opacity duration-500 ${
+                  isActive ? 'opacity-0' : 'opacity-100'
+                }`}
+              />
+            </motion.button>
+          )
+        })}
+      </div>
+
+      <div className="mx-auto mt-10 max-w-2xl px-6 text-center">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeStop?.image}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.35 }}
+            aria-live="polite"
+          >
+            <h3 className="text-2xl">{activeStop?.title}</h3>
+            <p className="mt-2 leading-relaxed text-ink-soft">{activeStop?.body}</p>
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="mt-8 flex items-center justify-center gap-3 sm:gap-5">
+          <StageButton direction="left" onClick={() => step(-1)} />
+
+          <div className="flex flex-nowrap justify-center gap-1 sm:gap-1.5">
             {HOUSE_TOUR.map((stop, index) => (
               <button
                 key={stop.image}
                 type="button"
-                role="tab"
-                aria-selected={index === activeIndex}
                 aria-label={stop.title}
-                onClick={() => scrollToIndex(index)}
+                aria-current={index === activeIndex}
+                onClick={() => goTo(index)}
                 className={`h-1.5 rounded-full transition-all duration-500 ${
-                  index === activeIndex ? 'w-10 bg-terracotta' : 'w-4 bg-clay hover:bg-blush'
+                  index === activeIndex
+                    ? 'w-8 bg-terracotta sm:w-10'
+                    : 'w-3 bg-clay hover:bg-blush sm:w-4'
                 }`}
               />
             ))}
           </div>
 
-          <div className="flex gap-2">
-            <RailButton
-              direction="left"
-              disabled={!canScrollLeft}
-              onClick={() => scrollByStep(-1)}
-            />
-            <RailButton
-              direction="right"
-              disabled={!canScrollRight}
-              onClick={() => scrollByStep(1)}
-            />
-          </div>
+          <StageButton direction="right" onClick={() => step(1)} />
         </div>
       </div>
     </section>
   )
 }
 
-interface RailButtonProps {
+interface StageButtonProps {
   readonly direction: 'left' | 'right'
-  readonly disabled: boolean
   readonly onClick: () => void
 }
 
-function RailButton({ direction, disabled, onClick }: RailButtonProps) {
+function StageButton({ direction, onClick }: StageButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
-      disabled={disabled}
-      className="grid size-11 place-items-center rounded-full bg-sand text-ink ring-1 ring-clay/60 transition-all duration-300 hover:bg-terracotta hover:text-cream hover:ring-terracotta disabled:pointer-events-none disabled:opacity-35"
+      className="grid size-11 shrink-0 place-items-center rounded-full bg-sand text-ink ring-1 ring-clay/60 transition-all duration-300 hover:bg-terracotta hover:text-cream hover:ring-terracotta"
     >
       <span className="sr-only">{direction === 'left' ? 'Pièce précédente' : 'Pièce suivante'}</span>
       <svg aria-hidden viewBox="0 0 24 24" fill="none" className="size-5">

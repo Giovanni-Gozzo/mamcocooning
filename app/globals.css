@@ -18,6 +18,13 @@
   --color-honey: #e0a457;
   --color-blush: #e9bda7;
 
+  /* Taken from the MAM's jungle logo: its ring, its foliage, its hibiscus. */
+  --color-jungle: #3f6b43;
+  --color-leaf: #7aa063;
+  --color-leaf-soft: #cfe0c2;
+  --color-hibiscus: #d1698c;
+  --color-frangipani: #f5d9a8;
+
   --color-ink: #382d28;
   --color-ink-soft: #6d5d55;
   --color-ink-faint: #9b8a80;
@@ -124,9 +131,20 @@
   50%      { transform: translateY(-14px); }
 }
 
-@keyframes marquee-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+/* Clouds crossing the sky: a full lap, restarting off-screen on the other side. */
+@keyframes cloud-drift {
+  from { transform: translateX(-22vw); }
+  to   { transform: translateX(122vw); }
+}
+
+@keyframes doodle-bob {
+  0%, 100% { transform: translateY(0) rotate(var(--doodle-tilt, 0deg)); }
+  50%      { transform: translateY(-12px) rotate(calc(var(--doodle-tilt, 0deg) + 5deg)); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50%      { opacity: 0.9; transform: scale(1.1); }
 }
 
 @keyframes soft-pulse {
@@ -136,8 +154,10 @@
 
 .animate-blob-drift { animation: blob-drift 22s var(--ease-soft) infinite; }
 .animate-gentle-float { animation: gentle-float 7s ease-in-out infinite; }
-.animate-marquee { animation: marquee-scroll 60s linear infinite; }
 .animate-soft-pulse { animation: soft-pulse 6s ease-in-out infinite; }
+.animate-cloud-drift { animation: cloud-drift 90s linear infinite; }
+.animate-doodle-bob { animation: doodle-bob 8s ease-in-out infinite; }
+.animate-twinkle { animation: twinkle 4.5s ease-in-out infinite; }
 
 /* ── Motion preferences ──────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {

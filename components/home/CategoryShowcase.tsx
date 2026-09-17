@@ -1,8 +1,15 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { FloatingJungle, type JungleSpec } from '@/components/ui/FloatingJungle'
 import { Reveal } from '@/components/ui/Reveal'
 import { SectionTitle } from '@/components/ui/SectionTitle'
 import type { CategoryWithCount } from '@/lib/types'
+
+const SHOWCASE_JUNGLE: readonly JungleSpec[] = [
+  { name: 'hibiscus', className: 'left-[-4%] top-[8%] hidden w-14 xl:block', color: 'text-hibiscus/45', tilt: -10 },
+  { name: 'fern', className: 'right-[-4%] top-[34%] hidden w-16 xl:block', color: 'text-jungle/25', tilt: 8, delay: '-3s' },
+  { name: 'elephant', className: 'left-[-5%] bottom-[12%] hidden w-16 xl:block', color: 'text-sage/50', tilt: 6, delay: '-5s' },
+]
 
 interface CategoryShowcaseProps {
   readonly categories: readonly CategoryWithCount[]
@@ -16,7 +23,9 @@ export function CategoryShowcase({ categories }: CategoryShowcaseProps) {
   if (categories.length === 0) return null
 
   return (
-    <section className="mx-auto mt-28 max-w-6xl px-6">
+    <section className="relative mx-auto mt-28 max-w-6xl px-6">
+      <FloatingJungle items={SHOWCASE_JUNGLE} />
+
       <SectionTitle
         eyebrow="Leurs activités"
         title="Ce qu'ils ont fait ces derniers temps"

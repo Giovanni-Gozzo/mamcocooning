@@ -1,38 +1,93 @@
 'use client'
 
 import Image from 'next/image'
-import { useMemo, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { CategoryFilter } from './CategoryFilter'
 import { Lightbox } from './Lightbox'
+import { GALLERY_PAGE_SIZE } from '@/lib/gallery'
 import type { CategoryWithCount, Photo } from '@/lib/types'
 
 const STAGGER_CAP = 12
 
 interface GalleryGridProps {
-  readonly photos: readonly Photo[]
+  readonly initialPhotos: readonly Photo[]
   readonly categories: readonly CategoryWithCount[]
   readonly initialCategory?: string | null
 }
 
-export function GalleryGrid({ photos, categories, initialCategory = null }: GalleryGridProps) {
+function countFor(
+  categories: readonly CategoryWithCount[],
+  slug: string | null,
+): number {
+  if (slug === null) {
+    return categories.reduce((total, category) => total + category.photoCount, 0)
+  }
+  return categories.find((category) => category.slug === slug)?.photoCount ?? 0
+}
+
+export function GalleryGrid({
+  initialPhotos,
+  categories,
+  initialCategory = null,
+}: GalleryGridProps) {
+  const [photos, setPhotos] = useState<readonly Photo[]>(initialPhotos)
   const [activeSlug, setActiveSlug] = useState<string | null>(initialCategory)
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const visiblePhotos = useMemo(
-    () =>
-      activeSlug === null
-        ? photos
-        : photos.filter((photo) => photo.categorySlug === activeSlug),
-    [photos, activeSlug],
+  const totalForScope = countFor(categories, activeSlug)
+  const hasMore = photos.length < totalForScope
+
+  const fetchPage = useCallback(
+    async (slug: string | null, offset: number): Promise<readonly Photo[] | null> => {
+      const params = new URLSearchParams({
+        limit: String(GALLERY_PAGE_SIZE),
+        offset: String(offset),
+      })
+      if (slug !== null) params.set('category', slug)
+
+      try {
+        const response = await fetch(`/api/photos?${params}`)
+        const payload = await response.json()
+
+        if (!response.ok || payload.success !== true) {
+          setError(payload.error ?? 'Chargement impossible.')
+          return null
+        }
+
+        setError(null)
+        return payload.data.photos as readonly Photo[]
+      } catch {
+        setError('Chargement impossible. Vérifiez votre connexion.')
+        return null
+      }
+    },
+    [],
   )
 
-  function selectCategory(slug: string | null) {
+  async function selectCategory(slug: string | null) {
+    if (slug === activeSlug) return
+
     setOpenIndex(null)
     setActiveSlug(slug)
+    setIsLoading(true)
+
+    const page = await fetchPage(slug, 0)
+    if (page !== null) setPhotos(page)
+    setIsLoading(false)
   }
 
-  if (photos.length === 0) {
+  async function loadMore() {
+    setIsLoading(true)
+
+    const page = await fetchPage(activeSlug, photos.length)
+    if (page !== null) setPhotos((current) => [...current, ...page])
+    setIsLoading(false)
+  }
+
+  if (initialPhotos.length === 0) {
     return (
       <p className="rounded-[2rem] bg-sand/70 px-8 py-16 text-center text-ink-soft ring-1 ring-clay/40">
         Les premières photos arrivent très bientôt.
@@ -45,16 +100,13 @@ export function GalleryGrid({ photos, categories, initialCategory = null }: Gall
       <CategoryFilter
         categories={categories}
         activeSlug={activeSlug}
-        onChange={selectCategory}
-        totalCount={photos.length}
+        onChange={(slug) => void selectCategory(slug)}
+        totalCount={countFor(categories, null)}
       />
 
-      <div
-        className="mt-10 columns-2 gap-4 md:columns-3 lg:columns-4 [&>*]:mb-4"
-        aria-live="polite"
-      >
+      <div className="mt-10 columns-2 gap-4 md:columns-3 lg:columns-4 [&>*]:mb-4" aria-live="polite">
         <AnimatePresence mode="popLayout">
-          {visiblePhotos.map((photo, index) => (
+          {photos.map((photo, index) => (
             <motion.button
               key={photo.id}
               type="button"
@@ -64,7 +116,7 @@ export function GalleryGrid({ photos, categories, initialCategory = null }: Gall
               exit={{ opacity: 0, scale: 0.94 }}
               transition={{
                 duration: 0.55,
-                delay: Math.min(index, STAGGER_CAP) * 0.035,
+                delay: Math.min(index % GALLERY_PAGE_SIZE, STAGGER_CAP) * 0.035,
                 ease: [0.22, 1, 0.36, 1],
               }}
               onClick={() => setOpenIndex(index)}
@@ -89,14 +141,38 @@ export function GalleryGrid({ photos, categories, initialCategory = null }: Gall
         </AnimatePresence>
       </div>
 
-      {visiblePhotos.length === 0 && (
+      {photos.length === 0 && !isLoading && (
         <p className="mt-10 rounded-[2rem] bg-sand/70 px-8 py-14 text-center text-ink-soft ring-1 ring-clay/40">
           Pas encore de photo dans cette catégorie.
         </p>
       )}
 
+      {error !== null && (
+        <p
+          role="alert"
+          className="mt-8 rounded-2xl bg-terracotta/12 px-5 py-4 text-center text-sm font-semibold text-terracotta-deep"
+        >
+          {error}
+        </p>
+      )}
+
+      {hasMore && (
+        <div className="mt-12 text-center">
+          <button
+            type="button"
+            onClick={() => void loadMore()}
+            disabled={isLoading}
+            className="rounded-full bg-terracotta px-8 py-4 font-semibold text-cream transition-all duration-300 hover:-translate-y-0.5 hover:bg-terracotta-deep disabled:pointer-events-none disabled:opacity-60"
+          >
+            {isLoading
+              ? 'Chargement…'
+              : `Voir plus de photos (${totalForScope - photos.length} restantes)`}
+          </button>
+        </div>
+      )}
+
       <Lightbox
-        photos={visiblePhotos}
+        photos={photos}
         activeIndex={openIndex}
         onClose={() => setOpenIndex(null)}
         onNavigate={setOpenIndex}

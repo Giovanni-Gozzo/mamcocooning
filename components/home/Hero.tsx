@@ -3,11 +3,33 @@
 import Image from 'next/image'
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
 import { ButtonLink } from '@/components/ui/Button'
+import { CloudDivider } from '@/components/ui/CloudDivider'
+import { CloudLayer } from '@/components/ui/CloudLayer'
+import { FloatingDoodles, type DoodleSpec } from '@/components/ui/FloatingDoodles'
+import { FloatingJungle, type JungleSpec } from '@/components/ui/FloatingJungle'
 import { Magnetic } from '@/components/ui/Magnetic'
 import { SplitText } from '@/components/ui/SplitText'
 import { HOUSE_TOUR, SITE } from '@/lib/site'
 
 const PARALLAX_RANGE_PX = 620
+
+/** Toys in the page gutters. Hidden below lg, where there are no gutters. */
+const HERO_DOODLES: readonly DoodleSpec[] = [
+  { name: 'star', className: 'left-[2.5%] top-[26%] hidden w-7 lg:block', color: 'text-honey/75', tilt: -8 },
+  { name: 'teddy', className: 'left-[1.5%] top-[44%] hidden w-16 lg:block', color: 'text-clay', tilt: -10, delay: '-4s' },
+  { name: 'blocks', className: 'left-[3%] bottom-[16%] hidden w-12 lg:block', color: 'text-sage/55', tilt: 5, delay: '-1s' },
+  { name: 'balloon', className: 'right-[2%] top-[18%] hidden w-11 lg:block', color: 'text-blush', tilt: 6, delay: '-2s' },
+  { name: 'rattle', className: 'right-[1.5%] top-[48%] hidden w-11 lg:block', color: 'text-blush/85', tilt: -14, delay: '-5s' },
+  { name: 'star', className: 'right-[3.5%] bottom-[20%] hidden w-5 lg:block', color: 'text-terracotta/45', tilt: 12, delay: '-3s' },
+]
+
+/** Foliage anchored to the bottom corners, as if the page grew out of it. */
+const HERO_JUNGLE: readonly JungleSpec[] = [
+  { name: 'monstera', className: 'left-[-2%] bottom-[-6%] w-24 sm:w-32', color: 'text-jungle/25', tilt: -12 },
+  { name: 'palmLeaf', className: 'left-[6%] bottom-[-8%] hidden w-28 sm:block', color: 'text-leaf/30', tilt: 8, delay: '-3s' },
+  { name: 'fern', className: 'right-[-1%] bottom-[-4%] w-20 sm:w-24', color: 'text-jungle/20', tilt: 10, delay: '-5s' },
+  { name: 'hibiscus', className: 'right-[9%] bottom-[2%] hidden w-12 sm:block', color: 'text-hibiscus/45', tilt: -6, delay: '-2s' },
+]
 
 const CARDS = [
   { stop: HOUSE_TOUR[0], className: 'col-span-7 row-span-4' },
@@ -34,16 +56,17 @@ export function Hero() {
       className="grain relative overflow-hidden px-6 pt-32 pb-10 sm:pt-36 lg:pb-14"
     >
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-sand via-cream to-cream" />
-        <div className="animate-blob-drift absolute -top-32 -left-24 size-[32rem] bg-terracotta-soft/70 blur-[90px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,#c6dff0_0%,#dbe9f0_22%,#f0e9e0_52%,var(--color-cream)_88%)]" />
+        <CloudLayer className="h-[52%]" />
+        <div className="animate-blob-drift absolute -bottom-20 -left-32 size-[26rem] bg-terracotta-soft/35 blur-[120px]" />
         <div
-          className="animate-blob-drift absolute top-20 -right-28 size-[36rem] bg-sage-soft/80 blur-[100px]"
+          className="animate-blob-drift absolute -right-32 -bottom-24 size-[28rem] bg-sage-soft/40 blur-[120px]"
           style={{ animationDelay: '-11s' }}
         />
-        <div
-          className="animate-soft-pulse absolute bottom-0 left-1/3 size-80 rounded-full bg-blush/40 blur-[80px]"
-        />
       </div>
+
+      <FloatingJungle items={HERO_JUNGLE} className="-z-10" />
+      <FloatingDoodles doodles={HERO_DOODLES} className="-z-10" />
 
       <motion.div
         style={prefersReducedMotion ? undefined : { y: contentY, opacity: contentOpacity }}
@@ -87,7 +110,7 @@ export function Hero() {
             className="mt-9 flex flex-wrap items-center gap-3"
           >
             <Magnetic>
-              <ButtonLink href="/contact">Réserver une visite</ButtonLink>
+              <ButtonLink href={`tel:${SITE.phoneHref}`}>Appelez-nous</ButtonLink>
             </Magnetic>
             <Magnetic>
               <ButtonLink href="/galerie" variant="secondary">
@@ -138,6 +161,10 @@ export function Hero() {
           <span className="h-9 w-px bg-gradient-to-b from-clay to-transparent" />
         </motion.span>
       </motion.div>
+
+      <div className="absolute inset-x-0 bottom-0">
+        <CloudDivider className="text-cream" />
+      </div>
     </section>
   )
 }

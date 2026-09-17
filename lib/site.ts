@@ -55,29 +55,30 @@ export const TEAM: readonly TeamMember[] = [
 ]
 
 export interface Value {
-  readonly icon: string
+  /** Key into the doodle set in components/ui/doodles.tsx. */
+  readonly doodle: 'heart' | 'teddy' | 'star' | 'rainbow'
   readonly title: string
   readonly body: string
 }
 
 export const VALUES: readonly Value[] = [
   {
-    icon: '🤍',
+    doodle: 'heart',
     title: 'Un rythme respecté',
     body: 'Chaque enfant a son propre tempo. Siestes, repas et jeux suivent le sien, jamais l’inverse.',
   },
   {
-    icon: '🏡',
+    doodle: 'teddy',
     title: 'Comme à la maison',
     body: 'Un pavillon lumineux avec jardin, pensé à hauteur d’enfant, dans un petit groupe familial.',
   },
   {
-    icon: '🎓',
+    doodle: 'star',
     title: 'Deux professionnelles agréées',
     body: 'Un agrément du Conseil départemental, une formation continue et les gestes de premiers secours à jour.',
   },
   {
-    icon: '📱',
+    doodle: 'rainbow',
     title: 'Des nouvelles chaque semaine',
     body: 'Les photos des activités sont publiées ici. Vous voyez ce que votre enfant a vécu dans la journée.',
   },
@@ -87,37 +88,44 @@ export interface DayMoment {
   readonly time: string
   readonly title: string
   readonly body: string
+  readonly doodle: 'duck' | 'blocks' | 'heart' | 'moon' | 'sprout' | 'balloon'
 }
 
 export const DAY_MOMENTS: readonly DayMoment[] = [
   {
     time: '7h30',
     title: 'Les arrivées',
+    doodle: 'duck',
     body: 'Un accueil individuel, le temps des transmissions avec vous, puis un jeu libre en douceur.',
   },
   {
     time: '9h30',
     title: 'L’atelier du matin',
+    doodle: 'blocks',
     body: 'Peinture, pâte à modeler, éveil musical ou parcours de motricité selon le jour et les envies.',
   },
   {
     time: '11h15',
     title: 'Le repas',
+    doodle: 'heart',
     body: 'Des repas équilibrés partagés à table, et l’apprentissage progressif de l’autonomie.',
   },
   {
     time: '12h30',
     title: 'La sieste',
+    doodle: 'moon',
     body: 'Chacun son lit, sa turbulette et son doudou, dans une chambre calme et tamisée.',
   },
   {
     time: '15h00',
     title: 'Goûter et jardin',
+    doodle: 'sprout',
     body: 'Un goûter maison, puis le jardin, les semis, les balades ou la lecture d’histoires.',
   },
   {
     time: '17h00',
     title: 'Les retrouvailles',
+    doodle: 'balloon',
     body: 'On raconte la journée, on montre ce qu’on a fabriqué, et on repart avec ses créations.',
   },
 ]
@@ -129,7 +137,7 @@ export interface Stat {
 }
 
 export const STATS: readonly Stat[] = [
-  { value: 17, suffix: ' ans', label: 'd’expérience auprès des tout-petits' },
+  { value: 23, suffix: ' ans', label: 'd’expérience auprès des tout-petits' },
   { value: 8, suffix: '', label: 'enfants maximum, pour un vrai cocon' },
   { value: 11, suffix: 'h', label: 'd’amplitude horaire, 7h30 à 18h30' },
   { value: 2, suffix: '', label: 'professionnelles agréées et formées' },
