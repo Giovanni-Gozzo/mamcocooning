@@ -14,6 +14,15 @@ export const SITE = {
   phone: '06 67 41 86 35',
   phoneHref: '+33667418635',
   hours: { days: 'Du lundi au vendredi', time: '7h30 – 18h30' },
+  /** Neighbouring towns parents actually commute from, for local search. */
+  areaServed: [
+    'Entraigues-sur-la-Sorgue',
+    'Vedène',
+    'Saint-Saturnin-lès-Avignon',
+    'Sorgues',
+    'Althen-des-Paluds',
+    'Avignon',
+  ],
   mapEmbedUrl:
     'https://maps.google.com/maps?width=100%25&height=600&hl=fr&q=10%20All.%20de%20la%20Grange%20de%20Javon%2084320%20Entraigues-sur-la-Sorgue&t=&z=15&ie=UTF8&iwloc=B&output=embed',
 } as const

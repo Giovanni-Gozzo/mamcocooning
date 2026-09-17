@@ -4,8 +4,9 @@ import { SectionTitle } from '@/components/ui/SectionTitle'
 import { SITE } from '@/lib/site'
 
 export const metadata: Metadata = {
-  title: 'Contact',
+  title: 'Contact et accès — Entraigues-sur-la-Sorgue (84320)',
   description: `Nous trouver au ${SITE.address.street}, ${SITE.address.postalCode} ${SITE.address.city}. Ouvert ${SITE.hours.days.toLowerCase()} de ${SITE.hours.time}.`,
+  alternates: { canonical: '/contact' },
 }
 
 const DETAILS = [

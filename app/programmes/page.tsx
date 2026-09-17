@@ -12,9 +12,10 @@ import { listCategoriesWithCounts } from '@/lib/photos'
 export const revalidate = 300
 
 export const metadata: Metadata = {
-  title: 'Nos journées',
+  title: 'Une journée à la MAM : horaires et activités d’éveil',
   description:
     'Le déroulé d’une journée à la MAM Cocooning, de l’accueil du matin aux retrouvailles du soir, et les activités d’éveil proposées.',
+  alternates: { canonical: '/programmes' },
 }
 
 const PAGE_DOODLES: readonly DoodleSpec[] = [

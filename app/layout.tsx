@@ -56,20 +56,35 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-/** Helps Google show the MAM as a local business with address and hours. */
+/**
+ * Local-business markup. This is what lets Google show the MAM with its
+ * address, hours and phone number directly in the results, and what ties the
+ * site to the Google Business Profile.
+ */
 const localBusinessJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ChildCare',
+  '@id': `${env.siteUrl}/#organisation`,
   name: SITE.name,
+  alternateName: 'MAM Cocooning',
   description: SITE.description,
   telephone: SITE.phoneHref,
   url: env.siteUrl,
+  image: `${env.siteUrl}/img/logo-mam-cocooning.png`,
+  logo: `${env.siteUrl}/img/logo-mam-cocooning.png`,
   address: {
     '@type': 'PostalAddress',
     streetAddress: SITE.address.street,
     postalCode: SITE.address.postalCode,
     addressLocality: SITE.address.city,
+    addressRegion: 'Vaucluse',
     addressCountry: 'FR',
+  },
+  areaServed: SITE.areaServed.map((city) => ({ '@type': 'City', name: city })),
+  audience: {
+    '@type': 'PeopleAudience',
+    suggestedMinAge: 0,
+    suggestedMaxAge: 3,
   },
   openingHoursSpecification: {
     '@type': 'OpeningHoursSpecification',

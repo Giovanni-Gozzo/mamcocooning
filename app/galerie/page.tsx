@@ -7,9 +7,10 @@ import { listCategoriesWithCounts, listPhotos } from '@/lib/photos'
 export const revalidate = 120
 
 export const metadata: Metadata = {
-  title: 'Galerie',
+  title: 'Photos du quotidien à la MAM',
   description:
     'Les photos du quotidien à la MAM Cocooning : activités manuelles, éveil musical, motricité, jardinage et moments de vie.',
+  alternates: { canonical: '/galerie' },
 }
 
 interface GalleryPageProps {

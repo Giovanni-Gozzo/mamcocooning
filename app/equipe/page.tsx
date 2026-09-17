@@ -6,9 +6,10 @@ import { SectionTitle } from '@/components/ui/SectionTitle'
 import { SITE, TEAM, type TeamMember } from '@/lib/site'
 
 export const metadata: Metadata = {
-  title: 'L’équipe',
+  title: 'Assistantes maternelles agréées à Entraigues-sur-la-Sorgue',
   description:
     'Sigrid Gozzo et Julie Delannoy, assistantes maternelles agréées de la MAM Cocooning à Entraigues-sur-la-Sorgue.',
+  alternates: { canonical: '/equipe' },
 }
 
 export default function TeamPage() {
