@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "legacy:manifest": "node scripts/generate-legacy-manifest.mjs",
-    "legacy:classify": "node --env-file=.env.local scripts/classify-legacy.mjs"
+    "legacy:classify": "node --env-file=.env.local scripts/classify-legacy.mjs",
+    "check:pages": "node scripts/dev/check.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.12.0",

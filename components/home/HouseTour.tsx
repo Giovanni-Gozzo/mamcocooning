@@ -8,18 +8,33 @@ import { HOUSE_TOUR } from '@/lib/site'
 
 const SCROLL_STEP_RATIO = 0.82
 
+/** The rail is inset, and scroll-snap aligns cards to that inset, not to 0. */
+function scrollInset(rail: HTMLElement): number {
+  return Number.parseFloat(getComputedStyle(rail).scrollPaddingLeft) || 0
+}
+
 export function HouseTour() {
   const railRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
 
+  /** Reads real card positions: the rail is padded, so an average width lies. */
   const syncFromScroll = useCallback(() => {
     const rail = railRef.current
     if (rail === null) return
 
-    const cardWidth = rail.scrollWidth / HOUSE_TOUR.length
-    setActiveIndex(Math.round(rail.scrollLeft / cardWidth))
+    const cards = [...rail.querySelectorAll('figure')]
+    const target = rail.scrollLeft + scrollInset(rail)
+    const nearest = cards.reduce(
+      (best, card, index) =>
+        Math.abs(card.offsetLeft - target) < best.distance
+          ? { index, distance: Math.abs(card.offsetLeft - target) }
+          : best,
+      { index: 0, distance: Number.POSITIVE_INFINITY },
+    )
+
+    setActiveIndex(nearest.index)
     setCanScrollLeft(rail.scrollLeft > 8)
     setCanScrollRight(rail.scrollLeft + rail.clientWidth < rail.scrollWidth - 8)
   }, [])
@@ -36,8 +51,10 @@ export function HouseTour() {
 
   function scrollToIndex(index: number) {
     const rail = railRef.current
-    if (rail === null) return
-    rail.scrollTo({ left: (rail.scrollWidth / HOUSE_TOUR.length) * index, behavior: 'smooth' })
+    const card = rail?.querySelectorAll('figure')[index]
+    if (rail === null || card === undefined) return
+
+    rail.scrollTo({ left: card.offsetLeft - scrollInset(rail), behavior: 'smooth' })
   }
 
   return (
@@ -57,7 +74,7 @@ export function HouseTour() {
           tabIndex={0}
           role="group"
           aria-label="Visite de la maison, faites défiler horizontalement"
-          className="no-scrollbar flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-6 pb-4 lg:px-[max(1.5rem,calc((100vw-72rem)/2))]"
+          className="no-scrollbar flex snap-x snap-mandatory scroll-pl-6 gap-5 overflow-x-auto scroll-smooth px-6 pb-4 lg:scroll-pl-[max(1.5rem,calc((100vw-72rem)/2))] lg:px-[max(1.5rem,calc((100vw-72rem)/2))]"
         >
           {HOUSE_TOUR.map((stop, index) => (
             <motion.figure
