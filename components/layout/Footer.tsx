@@ -32,10 +32,14 @@ export function Footer() {
 
       <div className="relative mx-auto grid max-w-6xl gap-12 px-6 sm:grid-cols-2 lg:grid-cols-4">
         <div className="sm:col-span-2 lg:col-span-1">
-          <p className="font-display text-2xl font-semibold">
-            Mam<span className="text-terracotta">Cocooning</span>
-          </p>
-          <p className="mt-3 max-w-xs text-sm leading-relaxed text-ink-soft">{SITE.tagline}.</p>
+          <Image
+            src="/img/logo-mam-cocooning.png"
+            alt={`Logo de ${SITE.name}`}
+            width={320}
+            height={320}
+            className="w-32 max-w-full"
+          />
+          <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-soft">{SITE.tagline}.</p>
         </div>
 
         <nav aria-label="Pages du site">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from 'motion/react'
@@ -41,16 +42,23 @@ export function Header() {
             : '0 0 0 0 rgba(0,0,0,0)',
         }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full py-2.5 pr-2.5 pl-5 ring-1 ring-clay/45 backdrop-blur-xl"
+        className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full py-2 pr-2.5 pl-3 ring-1 ring-clay/45 backdrop-blur-xl"
       >
         <Link href="/" className="group flex items-center gap-2.5" aria-label={`${SITE.name}, accueil`}>
           <motion.span
             aria-hidden
-            className="grid size-9 place-items-center rounded-full bg-terracotta text-base text-cream"
-            whileHover={{ rotate: 12, scale: 1.08 }}
+            className="block size-12 shrink-0"
+            whileHover={{ rotate: 8, scale: 1.08 }}
             transition={{ type: 'spring', stiffness: 320, damping: 14 }}
           >
-            🌿
+            <Image
+              src="/img/logo-mam-cocooning.png"
+              alt=""
+              width={80}
+              height={80}
+              priority
+              className="size-full object-contain"
+            />
           </motion.span>
           <span className="font-display text-[1.05rem] leading-none font-semibold tracking-tight">
             Mam<span className="text-terracotta">Cocooning</span>
