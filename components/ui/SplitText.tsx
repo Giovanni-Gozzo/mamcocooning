@@ -24,8 +24,8 @@ export function SplitText({ text, className, delay = 0 }: SplitTextProps) {
           // The class goes on each word: a gradient clipped to text only paints
           // the box it is declared on, and every word is its own box here.
           className={`inline-block whitespace-pre ${className ?? ''}`}
-          initial={{ opacity: 0, y: '0.45em', filter: 'blur(8px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          initial={{ opacity: 0, y: '0.45em' }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{
             duration: 0.7,
             delay: delay + index * 0.055,

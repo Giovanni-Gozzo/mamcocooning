@@ -28,8 +28,8 @@ export function Reveal({ children, delay = 0, direction = 'up', className }: Rev
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, ...offset, filter: 'blur(6px)' }}
-      whileInView={{ opacity: 1, x: 0, y: 0, filter: 'blur(0px)' }}
+      initial={{ opacity: 0, ...offset }}
+      whileInView={{ opacity: 1, x: 0, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.75, delay, ease: [0.22, 1, 0.36, 1] }}
     >

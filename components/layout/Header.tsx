@@ -42,7 +42,7 @@ export function Header() {
             : '0 0 0 0 rgba(0,0,0,0)',
         }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-        className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full py-2 pr-2.5 pl-3 ring-1 ring-clay/45 backdrop-blur-xl"
+        className="mx-auto flex max-w-5xl items-center justify-between gap-4 rounded-full py-2 pr-2.5 pl-3 ring-1 ring-clay/45 backdrop-blur-sm md:backdrop-blur-xl"
       >
         <Link href="/" className="group flex items-center gap-2.5" aria-label={`${SITE.name}, accueil`}>
           <motion.span
