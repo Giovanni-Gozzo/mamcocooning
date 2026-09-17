@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 import { animate, useInView, useReducedMotion } from 'motion/react'
 import { STATS } from '@/lib/site'
 
-const COUNT_DURATION_S = 1.6
+const COUNT_DURATION_S = 0.85
+/** Positive margin starts the count just before the tile reaches the screen. */
+const TRIGGER_MARGIN = '0px 0px 120px 0px'
+const STAGGER_S = 0.04
 
 export function Stats() {
   return (
@@ -13,7 +16,7 @@ export function Stats() {
         {STATS.map((stat, index) => (
           <div key={stat.label} className="bg-cream px-7 py-9 text-center sm:text-left">
             <p className="font-display text-[2.6rem] leading-none font-semibold text-terracotta">
-              <Counter target={stat.value} delay={index * 0.1} />
+              <Counter target={stat.value} delay={index * STAGGER_S} />
               {stat.suffix}
             </p>
             <p className="mt-3 text-sm leading-relaxed text-ink-soft">{stat.label}</p>
@@ -27,7 +30,7 @@ export function Stats() {
 /** Counts up to its target the first time it scrolls into view. */
 function Counter({ target, delay }: { readonly target: number; readonly delay: number }) {
   const ref = useRef<HTMLSpanElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-60px' })
+  const isInView = useInView(ref, { once: true, margin: TRIGGER_MARGIN })
   const prefersReducedMotion = useReducedMotion()
   const [value, setValue] = useState(0)
 
