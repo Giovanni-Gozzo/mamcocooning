@@ -7,17 +7,20 @@ import { env } from '@/lib/env'
 import { SITE } from '@/lib/site'
 import './globals.css'
 
+// Only the weights actually used: the optical-size and soft/wonk axes tripled
+// the file for no visible difference.
 const fraunces = Fraunces({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-fraunces',
-  axes: ['SOFT', 'WONK', 'opsz'],
+  weight: ['600', '700'],
 })
 
 const nunito = Nunito({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-nunito',
+  weight: ['400', '600', '700'],
 })
 
 export const metadata: Metadata = {
