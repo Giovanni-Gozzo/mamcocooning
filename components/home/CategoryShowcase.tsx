@@ -34,7 +34,7 @@ export function CategoryShowcase({ categories }: CategoryShowcaseProps) {
 
       <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {categories.map((category, index) => (
-          <Reveal key={category.slug} delay={Math.min(index, 6) * 0.06}>
+          <Reveal key={category.slug} delay={Math.min(index, 3) * 0.05}>
             <Link
               href={`/galerie?categorie=${category.slug}`}
               className="group relative flex h-64 flex-col justify-end overflow-hidden rounded-[2rem] p-6 ring-1 ring-clay/40"

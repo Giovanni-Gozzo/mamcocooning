@@ -60,7 +60,7 @@ export default function ContactPage() {
               'block h-full rounded-[2rem] bg-sand/70 p-8 ring-1 ring-clay/40 transition-all duration-500 hover:-translate-y-1.5 hover:bg-sand'
 
             return (
-              <Reveal key={detail.title} delay={index * 0.08}>
+              <Reveal key={detail.title} delay={index * 0.05}>
                 {detail.href === null ? (
                   <div className={className}>{content}</div>
                 ) : (

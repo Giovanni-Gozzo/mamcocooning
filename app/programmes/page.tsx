@@ -44,7 +44,7 @@ export default async function ProgrammesPage() {
             const Doodle = DOODLES[moment.doodle]
 
             return (
-              <Reveal key={moment.time} delay={index * 0.06} direction="right">
+              <Reveal key={moment.time} delay={Math.min(index, 3) * 0.05} direction="right">
                 <li className="group relative pb-12 last:pb-0">
                   <span
                     aria-hidden
@@ -84,7 +84,7 @@ export default async function ProgrammesPage() {
 
           <div className="mt-12 flex flex-wrap justify-center gap-3">
             {categories.map((category, index) => (
-              <Reveal key={category.slug} delay={Math.min(index, 8) * 0.05}>
+              <Reveal key={category.slug} delay={Math.min(index, 4) * 0.04}>
                 <Link
                   href={`/galerie?categorie=${category.slug}`}
                   className="group flex items-center gap-3 rounded-full bg-sand px-5 py-3.5 ring-1 ring-clay/50 transition-all duration-400 hover:-translate-y-1 hover:bg-shell hover:ring-terracotta/40"

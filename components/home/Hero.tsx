@@ -10,8 +10,9 @@ import { FloatingJungle, type JungleSpec } from '@/components/ui/FloatingJungle'
 import { Magnetic } from '@/components/ui/Magnetic'
 import { SplitText } from '@/components/ui/SplitText'
 import { HOUSE_TOUR, SITE } from '@/lib/site'
+import { useRichMotion } from '@/lib/use-rich-motion'
 
-const PARALLAX_RANGE_PX = 620
+const PARALLAX_RANGE_PX = 900
 
 /** Toys in the page gutters. Hidden below lg, where there are no gutters. */
 const HERO_DOODLES: readonly DoodleSpec[] = [
@@ -40,6 +41,7 @@ const CARDS = [
 
 export function Hero() {
   const prefersReducedMotion = useReducedMotion()
+  const isRichMotion = useRichMotion()
 
   // Mapped from absolute scroll pixels rather than a target's progress: an
   // element-relative range degenerates on short viewports and can fade the hero
@@ -69,7 +71,7 @@ export function Hero() {
       <FloatingDoodles doodles={HERO_DOODLES} className="-z-10" />
 
       <motion.div
-        style={prefersReducedMotion ? undefined : { y: contentY, opacity: contentOpacity }}
+        style={isRichMotion ? { y: contentY, opacity: contentOpacity } : undefined}
         className="mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1.05fr_1fr] lg:gap-16"
       >
         <div>
@@ -176,6 +178,7 @@ interface FloatingCardProps {
 
 function FloatingCard({ card, index }: FloatingCardProps) {
   const prefersReducedMotion = useReducedMotion()
+  const isRichMotion = useRichMotion()
 
   return (
     <motion.figure

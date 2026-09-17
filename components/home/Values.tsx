@@ -28,7 +28,7 @@ export function Values() {
           const tint = DOODLE_TINTS[index % DOODLE_TINTS.length]
 
           return (
-            <Reveal key={value.title} delay={index * 0.08}>
+            <Reveal key={value.title} delay={index * 0.05}>
               <article className="group relative h-full overflow-hidden rounded-[2rem] bg-sand/70 p-8 ring-1 ring-clay/40 transition-all duration-500 hover:-translate-y-1.5 hover:bg-sand hover:shadow-[0_28px_60px_-34px_rgba(56,45,40,0.7)]">
                 <span
                   aria-hidden

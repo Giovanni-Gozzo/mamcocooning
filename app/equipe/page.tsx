@@ -29,7 +29,7 @@ export default function TeamPage() {
 
         <div className="mt-16 grid gap-10 sm:grid-cols-2 sm:gap-8">
           {TEAM.map((member, index) => (
-            <Reveal key={member.name} delay={index * 0.12}>
+            <Reveal key={member.name} delay={index * 0.06}>
               <MemberCard member={member} />
             </Reveal>
           ))}

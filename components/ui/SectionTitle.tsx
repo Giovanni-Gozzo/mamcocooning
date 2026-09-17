@@ -30,14 +30,14 @@ export function SectionTitle({
         </Reveal>
       )}
 
-      <Reveal delay={0.08}>
+      <Reveal delay={0.05}>
         <Heading className="max-w-3xl text-[clamp(1.9rem,4.5vw,3.1rem)] leading-[1.08]">
           {title}
         </Heading>
       </Reveal>
 
       {body !== undefined && (
-        <Reveal delay={0.16}>
+        <Reveal delay={0.1}>
           <p className="max-w-2xl text-[1.05rem] leading-relaxed text-ink-soft">{body}</p>
         </Reveal>
       )}

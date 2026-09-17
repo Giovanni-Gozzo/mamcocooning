@@ -8,7 +8,7 @@ import { Lightbox } from './Lightbox'
 import { GALLERY_PAGE_SIZE } from '@/lib/gallery'
 import type { CategoryWithCount, Photo } from '@/lib/types'
 
-const STAGGER_CAP = 12
+const STAGGER_CAP = 6
 
 interface GalleryGridProps {
   readonly initialPhotos: readonly Photo[]
@@ -115,8 +115,8 @@ export function GalleryGrid({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94 }}
               transition={{
-                duration: 0.55,
-                delay: Math.min(index % GALLERY_PAGE_SIZE, STAGGER_CAP) * 0.035,
+                duration: 0.4,
+                delay: Math.min(index % GALLERY_PAGE_SIZE, STAGGER_CAP) * 0.03,
                 ease: [0.22, 1, 0.36, 1],
               }}
               onClick={() => setOpenIndex(index)}
