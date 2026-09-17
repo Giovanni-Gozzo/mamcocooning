@@ -1,0 +1,93 @@
+[
+  {
+    "slug": "activite-manuelle",
+    "label": "Activité manuelle",
+    "emoji": "🎨",
+    "description": "Peinture, collage, pâte à modeler et petites mains créatives.",
+    "sortOrder": 10
+  },
+  {
+    "slug": "musique",
+    "label": "Musique",
+    "emoji": "🎵",
+    "description": "Éveil musical, instruments et comptines partagées.",
+    "sortOrder": 20
+  },
+  {
+    "slug": "motricite",
+    "label": "Motricité",
+    "emoji": "🤸",
+    "description": "Parcours, équilibre et découverte du corps en mouvement.",
+    "sortOrder": 30
+  },
+  {
+    "slug": "jeux-et-jouets",
+    "label": "Jeux et jouets",
+    "emoji": "🧸",
+    "description": "Jeux libres, constructions et premiers jeux de rôle.",
+    "sortOrder": 40
+  },
+  {
+    "slug": "lecture",
+    "label": "Lecture",
+    "emoji": "📚",
+    "description": "Histoires, imagiers et moments calmes autour du livre.",
+    "sortOrder": 50
+  },
+  {
+    "slug": "jardinage",
+    "label": "Jardinage",
+    "emoji": "🌱",
+    "description": "Semis, arrosage et découverte du vivant au jardin.",
+    "sortOrder": 60
+  },
+  {
+    "slug": "patisserie",
+    "label": "Pâtisserie",
+    "emoji": "🧁",
+    "description": "Gâteaux, sablés et ateliers cuisine à hauteur d’enfant.",
+    "sortOrder": 70
+  },
+  {
+    "slug": "anglais",
+    "label": "Notions d’anglais",
+    "emoji": "🇬🇧",
+    "description": "Premiers mots, chansons et jeux en anglais.",
+    "sortOrder": 80
+  },
+  {
+    "slug": "sorties",
+    "label": "Sorties",
+    "emoji": "🌳",
+    "description": "Balades, parc, médiathèque et découvertes en extérieur.",
+    "sortOrder": 90
+  },
+  {
+    "slug": "fetes",
+    "label": "Fêtes",
+    "emoji": "🎉",
+    "description": "Anniversaires, Noël, carnaval et grandes occasions.",
+    "sortOrder": 100
+  },
+  {
+    "slug": "repas",
+    "label": "Repas",
+    "emoji": "🍽️",
+    "description": "Repas équilibrés et apprentissage de l’autonomie à table.",
+    "sortOrder": 110
+  },
+  {
+    "slug": "cocooning",
+    "label": "Cocooning",
+    "emoji": "🌙",
+    "description": "Câlins, sieste et moments doux du quotidien.",
+    "sortOrder": 120
+  },
+  {
+    "slug": "le-quotidien",
+    "label": "Le quotidien",
+    "emoji": "✨",
+    "description": "La vie de la MAM, au fil des jours.",
+    "sortOrder": 900
+  }
+]
