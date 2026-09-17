@@ -1,0 +1,197 @@
+@import 'tailwindcss';
+
+/* ── Design tokens ───────────────────────────────────────────────────────── */
+@theme {
+  --color-cream: #fdf8f2;
+  --color-sand: #f6ebdd;
+  --color-shell: #eeddc9;
+  --color-clay: #e3c7ad;
+
+  --color-terracotta: #c2714f;
+  --color-terracotta-deep: #9c5638;
+  --color-terracotta-soft: #f0d5c6;
+
+  --color-sage: #87a07b;
+  --color-sage-deep: #5c7a55;
+  --color-sage-soft: #dde6d8;
+
+  --color-honey: #e0a457;
+  --color-blush: #e9bda7;
+
+  /* Taken from the MAM's jungle logo: its ring, its foliage, its hibiscus. */
+  --color-jungle: #3f6b43;
+  --color-leaf: #7aa063;
+  --color-leaf-soft: #cfe0c2;
+  --color-hibiscus: #d1698c;
+  --color-frangipani: #f5d9a8;
+
+  --color-ink: #382d28;
+  --color-ink-soft: #6d5d55;
+  --color-ink-faint: #9b8a80;
+
+  --font-display: var(--font-fraunces), 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-sans: var(--font-nunito), 'Nunito', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-blob: 42% 58% 61% 39% / 47% 43% 57% 53%;
+
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    color-scheme: light;
+    scroll-behavior: smooth;
+    overflow-x: clip;
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background-color: var(--color-terracotta-soft);
+    color: var(--color-terracotta-deep);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-terracotta);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+}
+
+/* ── Utilities ───────────────────────────────────────────────────────────── */
+@utility blob {
+  border-radius: var(--radius-blob);
+}
+
+/* Warm paper grain, keeps large flat areas from looking flat. */
+@utility grain {
+  position: relative;
+  isolation: isolate;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.35;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+  }
+}
+
+@utility text-gradient-warm {
+  background-image: linear-gradient(
+    115deg,
+    var(--color-terracotta-deep),
+    var(--color-terracotta) 45%,
+    var(--color-honey)
+  );
+  background-clip: text;
+  color: transparent;
+}
+
+/* Hides the scrollbar on horizontal rails without disabling scrolling. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Keyframes ───────────────────────────────────────────────────────────── */
+@keyframes blob-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33%      { transform: translate3d(3%, -4%, 0) scale(1.06); }
+  66%      { transform: translate3d(-3%, 3%, 0) scale(0.96); }
+}
+
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-14px); }
+}
+
+/* Clouds crossing the sky: a full lap, restarting off-screen on the other side. */
+@keyframes cloud-drift {
+  from { transform: translateX(-22vw); }
+  to   { transform: translateX(122vw); }
+}
+
+@keyframes doodle-bob {
+  0%, 100% { transform: translateY(0) rotate(var(--doodle-tilt, 0deg)); }
+  50%      { transform: translateY(-12px) rotate(calc(var(--doodle-tilt, 0deg) + 5deg)); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50%      { opacity: 0.9; transform: scale(1.1); }
+}
+
+@keyframes soft-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.06); }
+}
+
+.animate-blob-drift {
+  border-radius: 50%;
+  animation: blob-drift 22s var(--ease-soft) infinite;
+}
+.animate-gentle-float { animation: gentle-float 7s ease-in-out infinite; }
+.animate-soft-pulse { animation: soft-pulse 6s ease-in-out infinite; }
+.animate-cloud-drift { animation: cloud-drift 90s linear infinite; }
+.animate-doodle-bob { animation: doodle-bob 8s ease-in-out infinite; }
+.animate-twinkle { animation: twinkle 4.5s ease-in-out infinite; }
+
+/* ── Phone budget ────────────────────────────────────────────────────────── */
+/*
+ * A 120px blur over a quarter-million pixels costs more than everything else on
+ * the page combined. Phones keep the shapes, at a radius they can actually
+ * composite, and stop animating them.
+ */
+@media (max-width: 767px) {
+  .animate-blob-drift {
+    animation: none;
+    filter: blur(42px) !important;
+    opacity: 0.55;
+  }
+
+  /* Two clouds read as a sky just as well as five, at a fifth of the cost. */
+  .cloud-extra {
+    display: none;
+  }
+}
+
+/* ── Motion preferences ──────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
