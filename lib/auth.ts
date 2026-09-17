@@ -5,15 +5,14 @@
 import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
 import { cookies } from 'next/headers'
-import { SignJWT, jwtVerify } from 'jose'
 import { env } from './env'
+import { SESSION_COOKIE, SESSION_DURATION_SECONDS, isValidSessionToken } from './session'
+
+export { createSessionToken, isValidSessionToken } from './session'
 
 const scryptAsync = promisify(scrypt)
 
 const KEY_LENGTH = 64
-const SESSION_COOKIE = 'mc_session'
-const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 30
-const SESSION_SUBJECT = 'mam-cocooning-admin'
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString('hex')
@@ -30,33 +29,6 @@ export async function verifyPassword(password: string, stored: string): Promise<
 
   const derived = (await scryptAsync(password, salt, KEY_LENGTH)) as Buffer
   return timingSafeEqual(derived, expected)
-}
-
-function secretKey(): Uint8Array {
-  const secret = env.sessionSecret
-  if (secret === null) {
-    throw new Error('SESSION_SECRET manquant dans les variables d’environnement.')
-  }
-  return new TextEncoder().encode(secret)
-}
-
-export async function createSessionToken(): Promise<string> {
-  return new SignJWT({ role: 'admin' })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setSubject(SESSION_SUBJECT)
-    .setIssuedAt()
-    .setExpirationTime(`${SESSION_DURATION_SECONDS}s`)
-    .sign(secretKey())
-}
-
-export async function isValidSessionToken(token: string | undefined): Promise<boolean> {
-  if (!token || env.sessionSecret === null) return false
-  try {
-    const { payload } = await jwtVerify(token, secretKey(), { subject: SESSION_SUBJECT })
-    return payload.role === 'admin'
-  } catch {
-    return false
-  }
 }
 
 /** Reads the session cookie in a Server Component or Route Handler. */
