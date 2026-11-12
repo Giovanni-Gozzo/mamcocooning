@@ -5,6 +5,7 @@ import {
   extractTaggedImages,
   fetchRecentPosts,
   hasHashtag,
+  passesHashtagFilter,
   isAllowedImageUrl,
   resolveFullSizeUrl,
   type FacebookPost,
@@ -52,6 +53,18 @@ describe('hasHashtag', () => {
   test('treats regex characters in the hashtag literally', () => {
     expect(hasHashtag('#a.b', 'a.b')).toBe(true)
     expect(hasHashtag('#axb', 'a.b')).toBe(false)
+  })
+})
+
+describe('passesHashtagFilter', () => {
+  test('lets every post through when no hashtag is configured', () => {
+    expect(passesHashtagFilter('Fermé lundi', null)).toBe(true)
+    expect(passesHashtagFilter(undefined, null)).toBe(true)
+  })
+
+  test('requires the hashtag when one is configured', () => {
+    expect(passesHashtagFilter('Fermé lundi', 'site')).toBe(false)
+    expect(passesHashtagFilter('Atelier #site', 'site')).toBe(true)
   })
 })
 
@@ -128,6 +141,12 @@ describe('extractTaggedImages', () => {
     expect(extractTaggedImages([post({ created_time: 'hier' })], 'site')[0]?.createdAt).toBe(
       undefined,
     )
+  })
+
+  test('takes every post with photos when no hashtag is configured', () => {
+    const untagged = post({ id: 'page_9', message: 'Bonne semaine à tous' })
+
+    expect(extractTaggedImages([untagged], null).map((image) => image.postId)).toEqual(['page_9'])
   })
 
   test('ignores tagged posts without attachments', () => {

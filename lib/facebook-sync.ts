@@ -1,5 +1,5 @@
 /**
- * Pulls #site-tagged Facebook posts into the news feed: one publication per
+ * Pulls the Facebook posts into the news feed: one publication per
  * post, with its cleaned text and its photos.
  *
  * Each picture goes through the same pipeline as a manual upload (metadata
@@ -14,7 +14,7 @@ import {
   downloadImage,
   extractTaggedImages,
   fetchRecentPosts,
-  hasHashtag,
+  passesHashtagFilter,
   isAllowedImageUrl,
   resolveFullSizeUrl,
   type FacebookConfig,
@@ -227,7 +227,9 @@ function photoKey(url: string): string {
 
 /** Decides, without touching anything, whether a post sent by Make goes on the site. */
 export function triageIncomingPost(post: IncomingFacebookPost): IncomingVerdict {
-  if (!hasHashtag(post.message, env.facebookHashtag)) return { status: 'ignored', reason: 'hashtag' }
+  if (!passesHashtagFilter(post.message, env.facebookHashtag)) {
+    return { status: 'ignored', reason: 'hashtag' }
+  }
 
   const urls = [...new Set(post.imageUrls.map((url) => url.trim()))].filter(isAllowedImageUrl)
   if (urls.length === 0) return { status: 'ignored', reason: 'no-photo' }

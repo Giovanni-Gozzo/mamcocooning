@@ -347,7 +347,13 @@ describe('posts sent by Make', () => {
     ...overrides,
   })
 
-  test('ignore a post without the hashtag', () => {
+  test('take a post without hashtag when no filter is configured', () => {
+    vi.stubEnv('FACEBOOK_HASHTAG', '')
+
+    expect(triageIncomingPost(incoming({ message: 'Bonne semaine à tous' })).status).toBe('accepted')
+  })
+
+  test('ignore a post without the hashtag when a filter is configured', () => {
     expect(triageIncomingPost(incoming({ message: 'Fermé lundi' }))).toEqual({
       status: 'ignored',
       reason: 'hashtag',

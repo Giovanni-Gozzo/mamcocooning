@@ -9,7 +9,7 @@ Next.js 16 (App Router) · Tailwind CSS 4 · Motion · Vercel Blob · Neon Postg
 ## Ce que fait le site
 
 - **Site public** : accueil animé, visite de la maison pièce par pièce, journée type, équipe, contact.
-- **Actualités** : un fil de publications (date, texte, photos, activité), alimenté par Facebook (`#site`) et par les envois de `/admin`, filtrable par activité. Les catégories n'existent que si au moins une photo s'y trouve.
+- **Actualités** : un fil de publications (date, texte, photos, activité), alimenté par la Page Facebook et par les envois de `/admin`, filtrable par activité. Les catégories n'existent que si au moins une photo s'y trouve.
 - **Espace privé** (`/admin`) : Sigrid s'y connecte avec un mot de passe unique, dépose ses photos, et **Gemini les range automatiquement** dans la bonne catégorie en rédigeant leur description.
 - **Repli intégré** : sans base de données configurée, le site sert les 64 photos versionnées dans le dépôt. Il n'est jamais vide, jamais cassé.
 
@@ -90,7 +90,7 @@ Dans **Settings › Domains**, ajouter `mamcocooning.fr` et suivre les instructi
 | `GEMINI_API_KEY` | Les photos arrivent dans « Le quotidien », à reclasser |
 | `NEXT_PUBLIC_SITE_URL` | Vaut `https://mamcocooning.fr` |
 | `FACEBOOK_WEBHOOK_SECRET` | Make ne peut pas envoyer les posts Facebook au site |
-| `FACEBOOK_HASHTAG` | Vaut `site` (seuls les posts contenant `#site` arrivent sur le site) |
+| `FACEBOOK_HASHTAG` | Tous les posts de la Page arrivent sur le site. Si elle est remplie (ex. `site`), seuls les posts contenant ce hashtag arrivent |
 | `FACEBOOK_PAGE_ID` / `FACEBOOK_PAGE_ACCESS_TOKEN` | Variante API Graph seulement : pas de lecture directe de la Page |
 | `CRON_SECRET` | Variante API Graph seulement : pas de récupération quotidienne automatique |
 
@@ -110,14 +110,14 @@ Chaque photo est ré-encodée en WebP, redimensionnée, et **toutes ses métadon
 
 ## Photos depuis Facebook
 
-Sigrid publie sur la page Facebook de la MAM comme d'habitude. **Si le post contient `#site`**, ses photos arrivent sur le site, passent par le même traitement qu'un envoi depuis `/admin` (EXIF supprimés, classement et description par Gemini) et forment **une publication des Actualités** à la date du post, avec le texte du post **nettoyé par Gemini** (hashtags, prénoms d'enfants et infos personnelles retirés ; sans clé Gemini, aucun texte n'est publié).
+Sigrid publie sur la Page Facebook Mam Cocooning comme d'habitude. **Chaque post avec photo(s)** arrive sur le site (ou seulement ceux qui contiennent le hashtag choisi, si `FACEBOOK_HASHTAG` est rempli) : passent par le même traitement qu'un envoi depuis `/admin` (EXIF supprimés, classement et description par Gemini) et forment **une publication des Actualités** à la date du post, avec le texte du post **nettoyé par Gemini** (hashtags, prénoms d'enfants et infos personnelles retirés ; sans clé Gemini, aucun texte n'est publié).
 
-- **Un post par jour au maximum.** Le premier post `#site` du jour sort le jour même (à 8 h, ou tout de suite s'il arrive après) ; s'il y en a plusieurs, les suivants sortent les jours d'après, et les jours sans post rattrapent la file. Les posts programmés sont visibles dans `/admin` avec leur date « En ligne le … », mais pas sur le site avant leur jour.
+- **Un post par jour au maximum.** Le premier post du jour sort le jour même (à 8 h, ou tout de suite s'il arrive après) ; s'il y en a plusieurs, les suivants sortent les jours d'après, et les jours sans post rattrapent la file. Les posts programmés sont visibles dans `/admin` avec leur date « En ligne le … », mais pas sur le site avant leur jour.
 - Une photo retirée du site depuis `/admin` **ne revient jamais**, même si le post reste sur Facebook (registre `facebook_imports`).
 - Au plus 10 photos par post. Seuls les posts avec photo(s) sont pris en compte ; les vidéos sont ignorées.
 - Seuls les posts **de la Page Mam Cocooning** sont lus : rien ne vient des profils personnels.
 
-> ⚠️ Ne mettre `#site` que sur des photos dont **les parents ont signé l'autorisation de diffusion sur internet**.
+> ⚠️ Toutes les photos publiées sur la Page finissent sur le site : il faut **l'autorisation de diffusion sur internet signée par les parents** pour chaque enfant visible. Sinon, remplir `FACEBOOK_HASHTAG` (ex. `site`) pour ne publier que les posts choisis.
 
 ### Mise en place avec Make (recommandé, une seule fois)
 
@@ -133,7 +133,7 @@ Make relaie chaque nouveau post de la Page vers le site. Pas d'app Meta ni de je
    - *Body type* : `application/x-www-form-urlencoded`, avec les champs `id` = Post ID, `message` = Message, `full_picture` = Full picture
    - Facultatif, pour les posts à plusieurs photos : un champ `images` contenant les adresses des photos des pièces jointes, séparées par des virgules.
 6. **Planification** (horloge en bas à gauche) : *Every 3 hours* — l'offre gratuite (1 000 opérations/mois) le permet largement. Enregistrer, puis activer le scénario (interrupteur **ON**).
-7. Publier sur la Page un post test avec `#site`, puis cliquer sur **Run once** dans Make : le post apparaît dans `/admin` en quelques secondes.
+7. Publier sur la Page un post test avec une photo, puis cliquer sur **Run once** dans Make : le post apparaît dans `/admin` en quelques secondes.
 
 Le panneau « Depuis Facebook » de `/admin` affiche **« Branché via Make »** une fois `FACEBOOK_WEBHOOK_SECRET` en place.
 
@@ -149,7 +149,7 @@ Il faut que le compte Facebook utilisé soit **administrateur de la page** de la
 4. **Récupérer le jeton de la page.** Dans l'explorateur, avec ce jeton longue durée, appeler `me/accounts`. La réponse contient, pour la page de la MAM, son `id` (→ `FACEBOOK_PAGE_ID`) et son `access_token` (→ `FACEBOOK_PAGE_ACCESS_TOKEN`). Ce jeton de page **n'expire pas** tant que le mot de passe et les accès à la page ne changent pas.
 5. **Ajouter les variables dans Vercel** (*Settings › Environment Variables*) : `FACEBOOK_PAGE_ID`, `FACEBOOK_PAGE_ACCESS_TOKEN` et `CRON_SECRET` (une longue chaîne aléatoire, voir `.env.example`). Redéployer.
 6. **Mettre à jour la base** : dans `/admin`, cliquer de nouveau sur **« Initialiser la base »** pour créer les tables `facebook_imports`, `posts` et `site_images`.
-7. Publier un post test avec `#site`, puis **« Récupérer maintenant »**.
+7. Publier un post test avec une photo, puis **« Récupérer maintenant »**.
 
 Si Facebook refuse un jour l'accès (mot de passe changé, accès retiré…), le bouton l'indique clairement : il suffit de refaire les étapes 2 à 5.
 

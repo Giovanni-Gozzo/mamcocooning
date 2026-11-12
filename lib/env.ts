@@ -34,9 +34,13 @@ export const env = {
   get facebookPageToken(): string | null {
     return read('FACEBOOK_PAGE_ACCESS_TOKEN')
   },
-  /** Only posts carrying this hashtag reach the site. Stored without the "#". */
-  get facebookHashtag(): string {
-    return (read('FACEBOOK_HASHTAG') ?? 'site').replace(/^#/, '')
+  /**
+   * Optional filter: when set, only posts carrying this hashtag reach the
+   * site. Unset (the default), every post of the Page does. Stored without "#".
+   */
+  get facebookHashtag(): string | null {
+    const hashtag = read('FACEBOOK_HASHTAG')?.replace(/^#/, '').trim() ?? ''
+    return hashtag.length > 0 ? hashtag : null
   },
   /** Shared with Make: it signs every post sent to /api/webhooks/facebook. */
   get facebookWebhookSecret(): string | null {

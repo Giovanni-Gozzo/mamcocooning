@@ -4,6 +4,7 @@ import {
   isAdminConfigured,
   isBlobConfigured,
   isDatabaseConfigured,
+  isFacebookWebhookConfigured,
   missingAdminConfig,
 } from '@/lib/env'
 
@@ -45,6 +46,28 @@ describe('env readers', () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', '')
 
     expect(env.siteUrl).toBe('https://mamcocooning.fr')
+  })
+
+  test('take every Facebook post when no hashtag filter is set', () => {
+    vi.stubEnv('FACEBOOK_HASHTAG', '')
+    expect(env.facebookHashtag).toBeNull()
+
+    vi.stubEnv('FACEBOOK_HASHTAG', '#')
+    expect(env.facebookHashtag).toBeNull()
+  })
+
+  test('store the hashtag filter without its "#"', () => {
+    vi.stubEnv('FACEBOOK_HASHTAG', '#site')
+
+    expect(env.facebookHashtag).toBe('site')
+  })
+
+  test('know when Make can send posts', () => {
+    vi.stubEnv('FACEBOOK_WEBHOOK_SECRET', '')
+    expect(isFacebookWebhookConfigured()).toBe(false)
+
+    vi.stubEnv('FACEBOOK_WEBHOOK_SECRET', 'secret')
+    expect(isFacebookWebhookConfigured()).toBe(true)
   })
 })
 

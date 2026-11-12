@@ -9,7 +9,8 @@ interface FacebookSyncPanelProps {
   readonly isConfigured: boolean
   /** Make sends the posts on its own (FACEBOOK_WEBHOOK_SECRET is set). */
   readonly isWebhookConfigured: boolean
-  readonly hashtag: string
+  /** Optional filter; null means every post of the Page goes on the site. */
+  readonly hashtag: string | null
 }
 
 interface SyncReport {
@@ -66,9 +67,16 @@ export function FacebookSyncPanel({
     <section className="rounded-[2.5rem] bg-sand/70 p-8 ring-1 ring-clay/45">
       <h2 className="text-2xl">Depuis Facebook</h2>
       <p className="mt-2 leading-relaxed text-ink-soft">
-        Ajoutez <strong className="font-bold text-ink">#{hashtag}</strong> dans un post de la Page
-        Mam Cocooning : il devient une publication des Actualités, avec son texte nettoyé (prénoms
-        retirés) et ses photos rangées automatiquement.{' '}
+        {hashtag === null ? (
+          <>Chaque post avec photo(s) de la Page Mam Cocooning</>
+        ) : (
+          <>
+            Chaque post de la Page Mam Cocooning contenant{' '}
+            <strong className="font-bold text-ink">#{hashtag}</strong>
+          </>
+        )}{' '}
+        devient une publication des Actualités, avec son texte nettoyé (prénoms retirés) et ses
+        photos rangées automatiquement.{' '}
         <strong className="font-bold text-ink">Un post par jour au maximum</strong> : s&rsquo;il y en
         a plusieurs, les suivants sortent les jours d&rsquo;après. Ils apparaissent déjà ci-dessus,
         avec leur date de sortie.

@@ -1,8 +1,8 @@
 /**
  * Reads the MAM's Facebook page through Meta's Graph API.
  *
- * Only posts carrying the agreed hashtag (#site by default) are considered, so
- * nothing reaches the public site by accident. The post text may name children,
+ * Every post of the Page is considered, unless FACEBOOK_HASHTAG restricts
+ * the import to the posts carrying that hashtag. The post text may name children,
  * so it only reaches the site after lib/post-text.ts has cleaned it.
  */
 import { z } from 'zod'
@@ -83,6 +83,11 @@ function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
+/** True when there is no filter, or the message holds the hashtag. */
+export function passesHashtagFilter(message: string | undefined, hashtag: string | null): boolean {
+  return hashtag === null || hasHashtag(message, hashtag)
+}
+
 /** True when the message holds the hashtag as a whole word, in any case. */
 export function hasHashtag(message: string | undefined, hashtag: string): boolean {
   if (message === undefined || hashtag.length === 0) return false
@@ -114,13 +119,13 @@ function photosOf(post: FacebookPost): readonly FacebookMedia[] {
     .filter((media) => media.media_type === 'photo' && media.media?.image?.src !== undefined)
 }
 
-/** Every photo from the posts tagged with the hashtag, ready to download. */
+/** Every photo of the posts that pass the hashtag filter (all posts without one). */
 export function extractTaggedImages(
   posts: readonly FacebookPost[],
-  hashtag: string,
+  hashtag: string | null,
 ): readonly FacebookImage[] {
   return posts
-    .filter((post) => hasHashtag(post.message, hashtag))
+    .filter((post) => passesHashtagFilter(post.message, hashtag))
     .flatMap((post) =>
       photosOf(post).map((media, index) => ({
         externalId: `fb:${media.target?.id ?? `${post.id}:${index}`}`,
