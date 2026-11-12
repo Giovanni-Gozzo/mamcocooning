@@ -9,7 +9,7 @@ import { FloatingDoodles, type DoodleSpec } from '@/components/ui/FloatingDoodle
 import { FloatingJungle, type JungleSpec } from '@/components/ui/FloatingJungle'
 import { Magnetic } from '@/components/ui/Magnetic'
 import { SplitText } from '@/components/ui/SplitText'
-import { HOUSE_TOUR, SITE } from '@/lib/site'
+import { SITE, type TourStop } from '@/lib/site'
 import { useRichMotion } from '@/lib/use-rich-motion'
 
 const PARALLAX_RANGE_PX = 900
@@ -32,14 +32,23 @@ const HERO_JUNGLE: readonly JungleSpec[] = [
   { name: 'hibiscus', className: 'right-[9%] bottom-[2%] hidden w-12 sm:block', color: 'text-hibiscus/45', tilt: -6, delay: '-2s' },
 ]
 
-const CARDS = [
-  { stop: HOUSE_TOUR[0], className: 'col-span-7 row-span-4' },
-  { stop: HOUSE_TOUR[3], className: 'col-span-5 row-span-3' },
-  { stop: HOUSE_TOUR[1], className: 'col-span-5 row-span-3' },
-  { stop: HOUSE_TOUR[5], className: 'col-span-7 row-span-2' },
+/** Which tour stops the hero collage shows, and where. */
+const CARD_LAYOUT = [
+  { index: 0, className: 'col-span-7 row-span-4' },
+  { index: 3, className: 'col-span-5 row-span-3' },
+  { index: 1, className: 'col-span-5 row-span-3' },
+  { index: 5, className: 'col-span-7 row-span-2' },
 ] as const
 
-export function Hero() {
+interface HeroProps {
+  readonly stops: readonly TourStop[]
+}
+
+export function Hero({ stops }: HeroProps) {
+  const cards = CARD_LAYOUT.flatMap(({ index, className }) => {
+    const stop = stops[index]
+    return stop === undefined ? [] : [{ stop, className }]
+  })
   const prefersReducedMotion = useReducedMotion()
   const isRichMotion = useRichMotion()
 
@@ -115,7 +124,7 @@ export function Hero() {
               <ButtonLink href={`tel:${SITE.phoneHref}`}>Appelez-nous</ButtonLink>
             </Magnetic>
             <Magnetic>
-              <ButtonLink href="/galerie" variant="secondary">
+              <ButtonLink href="/actualites" variant="secondary">
                 Voir leurs journées
               </ButtonLink>
             </Magnetic>
@@ -141,7 +150,7 @@ export function Hero() {
         </div>
 
         <div className="grid aspect-[5/6] grid-cols-12 grid-rows-6 gap-3 sm:gap-4">
-          {CARDS.map((card, index) => (
+          {cards.map((card, index) => (
             <FloatingCard key={card.stop.image} card={card} index={index} />
           ))}
         </div>
@@ -172,7 +181,7 @@ export function Hero() {
 }
 
 interface FloatingCardProps {
-  readonly card: (typeof CARDS)[number]
+  readonly card: { readonly stop: TourStop; readonly className: string }
   readonly index: number
 }
 

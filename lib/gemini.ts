@@ -16,7 +16,7 @@ import type { Category, Classification } from './types'
  * so a lighter sibling takes over rather than dropping the photo into the
  * fallback category.
  */
-const MODELS = ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'] as const
+export const GEMINI_MODELS = ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'] as const
 const TIMEOUT_MS = 20_000
 const MAX_ALT_LENGTH = 160
 const MAX_CAPTION_LENGTH = 90
@@ -138,7 +138,7 @@ export async function classifyPhoto(
   const ai = new GoogleGenAI({ apiKey })
   const prompt = buildPrompt(categories)
 
-  for (const model of MODELS) {
+  for (const model of GEMINI_MODELS) {
     try {
       const response = await ai.models.generateContent({
         model,

@@ -2,8 +2,8 @@
  * Reads the MAM's Facebook page through Meta's Graph API.
  *
  * Only posts carrying the agreed hashtag (#site by default) are considered, so
- * nothing reaches the public site by accident. The post text itself is never
- * reused: it may name children, so Gemini writes the description instead.
+ * nothing reaches the public site by accident. The post text may name children,
+ * so it only reaches the site after lib/post-text.ts has cleaned it.
  */
 import { z } from 'zod'
 import { MAX_UPLOAD_BYTES } from './image'
@@ -55,6 +55,8 @@ export interface FacebookImage {
   /** Stable identity used to never import the same picture twice. */
   readonly externalId: string
   readonly postId: string
+  /** Raw text of the post. Never shown as is: see lib/post-text.ts. */
+  readonly postMessage: string | undefined
   /** Facebook's own photo id, used to ask for the full-size file. */
   readonly photoId: string | undefined
   /** Preview from the post listing, often reduced to ~720 px. */
@@ -123,6 +125,7 @@ export function extractTaggedImages(
       photosOf(post).map((media, index) => ({
         externalId: `fb:${media.target?.id ?? `${post.id}:${index}`}`,
         postId: post.id,
+        postMessage: post.message,
         photoId: media.target?.id,
         url: media.media?.image?.src ?? '',
         createdAt: toIsoDate(post.created_time),
