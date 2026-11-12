@@ -81,10 +81,16 @@ export async function listPhotos(query: PhotoQuery = {}): Promise<readonly Photo
       `select id, url, width, height, alt, caption, category_slug, confidence, source, created_at
          from photos
         where is_published = true
+          and ($4::boolean or created_at <= now())
           and ($1::text is null or category_slug = $1)
         order by created_at desc, id desc
         limit $2 offset $3`,
-      [query.categorySlug ?? null, clampLimit(query.limit), query.offset ?? 0],
+      [
+        query.categorySlug ?? null,
+        clampLimit(query.limit),
+        query.offset ?? 0,
+        query.includeScheduled === true,
+      ],
     )) as PhotoRow[]
 
     return rows.map(toPhoto)
@@ -119,7 +125,7 @@ export async function listCategoriesWithCounts(): Promise<readonly CategoryWithC
               count(p.id)::int as photo_count,
               (array_agg(p.url order by p.created_at desc))[1] as cover_url
          from categories c
-         join photos p on p.category_slug = c.slug and p.is_published = true
+         join photos p on p.category_slug = c.slug and p.is_published = true and p.created_at <= now()
         group by c.slug, c.label, c.emoji, c.description, c.sort_order
        having count(p.id) > 0
         order by c.sort_order asc, c.label asc`,

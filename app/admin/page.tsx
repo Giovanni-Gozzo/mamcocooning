@@ -13,6 +13,7 @@ import {
   isBlobConfigured,
   isDatabaseConfigured,
   isFacebookConfigured,
+  isFacebookWebhookConfigured,
   missingAdminConfig,
 } from '@/lib/env'
 import { listAllCategories, listCategoriesWithCounts, listPhotos } from '@/lib/photos'
@@ -39,7 +40,7 @@ export default async function AdminPage() {
   const [categories, categoriesWithCounts, photos, siteImages] = await Promise.all([
     listAllCategories(),
     listCategoriesWithCounts(),
-    listPhotos({ limit: 400 }),
+    listPhotos({ limit: 400, includeScheduled: true }),
     listSiteImages(),
   ])
 
@@ -96,7 +97,11 @@ export default async function AdminPage() {
         </section>
 
         <div className="mt-16">
-          <FacebookSyncPanel isConfigured={isFacebookConfigured()} hashtag={env.facebookHashtag} />
+          <FacebookSyncPanel
+            isConfigured={isFacebookConfigured()}
+            isWebhookConfigured={isFacebookWebhookConfigured()}
+            hashtag={env.facebookHashtag}
+          />
         </div>
 
         <div className="mt-16">

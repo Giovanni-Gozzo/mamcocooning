@@ -7,7 +7,6 @@
  * image ever imported, so the sync is safe to run as often as wanted and never
  * resurrects a photo Sigrid has taken down.
  */
-import { nanoid } from 'nanoid'
 import { requireSql } from './db'
 import { env, isBlobConfigured, isDatabaseConfigured } from './env'
 import {
@@ -15,14 +14,15 @@ import {
   downloadImage,
   extractTaggedImages,
   fetchRecentPosts,
+  hasHashtag,
+  isAllowedImageUrl,
   resolveFullSizeUrl,
   type FacebookConfig,
   type FacebookImage,
 } from './facebook'
 import { ingestImage } from './ingest'
 import { cleanPostText } from './post-text'
-
-const POST_ID_LENGTH = 12
+import { createScheduledPost, findPostByExternalId, type ScheduledPost } from './post-schedule'
 
 /** Keeps one run well inside the function time limit (Gemini takes a few seconds per photo). */
 export const MAX_IMPORTS_PER_RUN = 8
@@ -105,38 +105,21 @@ async function releaseClaim(externalId: string): Promise<void> {
   )
 }
 
-/** Post ids already resolved during this run, so each text is cleaned once. */
-type PostCache = Map<string, Promise<string>>
+/** Posts already resolved during this run, so each text is cleaned once. */
+type PostCache = Map<string, Promise<ScheduledPost>>
 
-async function findPostId(externalId: string): Promise<string | null> {
-  const rows = (await requireSql().query('select id from posts where external_id = $1', [
-    externalId,
-  ])) as { id: string }[]
-  return rows[0]?.id ?? null
-}
-
-/** The feed publication for a Facebook post, created with its cleaned text on first sight. */
-async function createOrFindPost(image: FacebookImage): Promise<string> {
+/**
+ * The feed publication for a Facebook post. On first sight its text is cleaned
+ * and it takes the next free day (one post per day, see lib/post-schedule.ts).
+ */
+async function createOrFindPost(image: FacebookImage): Promise<ScheduledPost> {
   const externalId = `fbpost:${image.postId}`
-  const existing = await findPostId(externalId)
+  const existing = await findPostByExternalId(externalId)
   if (existing !== null) return existing
-
-  const body = await cleanPostText(image.postMessage)
-  const rows = (await requireSql().query(
-    `insert into posts (id, external_id, body, source, created_at)
-     values ($1, $2, $3, 'facebook', coalesce($4::timestamptz, now()))
-     on conflict (external_id) do nothing
-     returning id`,
-    [nanoid(POST_ID_LENGTH), externalId, body, image.createdAt ?? null],
-  )) as { id: string }[]
-
-  // Another run may have created it in the meantime.
-  const created = rows[0]?.id ?? (await findPostId(externalId))
-  if (created === null) throw new Error(`Publication ${externalId} introuvable après création.`)
-  return created
+  return createScheduledPost({ externalId, body: await cleanPostText(image.postMessage) })
 }
 
-function ensurePost(image: FacebookImage, cache: PostCache): Promise<string> {
+function ensurePost(image: FacebookImage, cache: PostCache): Promise<ScheduledPost> {
   const cached = cache.get(image.postId)
   if (cached !== undefined) return cached
   const pending = createOrFindPost(image)
@@ -146,22 +129,27 @@ function ensurePost(image: FacebookImage, cache: PostCache): Promise<string> {
   return pending
 }
 
+/**
+ * Imports one photo of a post. With Graph API credentials the full-size file
+ * is fetched; posts sent by Make already carry the URL to download.
+ */
 async function importOne(
   image: FacebookImage,
-  config: FacebookConfig,
+  config: FacebookConfig | null,
   posts: PostCache,
 ): Promise<boolean> {
   if (!(await claim(image.externalId))) return false
 
   let photoId: string
   try {
-    const postId = await ensurePost(image, posts)
-    const url = await resolveFullSizeUrl(image, config)
+    const post = await ensurePost(image, posts)
+    const url = config === null ? image.url : await resolveFullSizeUrl(image, config)
     const data = await downloadImage(url)
     const { photo } = await ingestImage(data, {
       source: 'facebook',
-      createdAt: image.createdAt,
-      postId,
+      // Dated at the post's publication slot, so it stays hidden until then.
+      createdAt: post.publishAt,
+      postId: post.id,
     })
     photoId = photo.id
   } catch (error) {
@@ -213,6 +201,66 @@ export async function syncFacebookPhotos(): Promise<SyncReport> {
   }
 
   return { imported, failed, remaining: fresh.length - batch.length }
+}
+
+/** A post as Make sends it: its Facebook id, its text, the URLs of its photos. */
+export interface IncomingFacebookPost {
+  readonly postId: string
+  readonly message: string | undefined
+  readonly imageUrls: readonly string[]
+}
+
+/** Albums can be huge; the site shows a handful and keeps the import quick. */
+export const MAX_PHOTOS_PER_POST = 10
+
+export type IncomingVerdict =
+  | { readonly status: 'ignored'; readonly reason: 'hashtag' | 'no-photo' }
+  | { readonly status: 'accepted'; readonly images: readonly FacebookImage[] }
+
+/**
+ * The file name in a Facebook CDN URL carries the photo id and, unlike the
+ * signed query string, never changes: it identifies the picture for good.
+ */
+function photoKey(url: string): string {
+  return new URL(url).pathname.split('/').at(-1) ?? url
+}
+
+/** Decides, without touching anything, whether a post sent by Make goes on the site. */
+export function triageIncomingPost(post: IncomingFacebookPost): IncomingVerdict {
+  if (!hasHashtag(post.message, env.facebookHashtag)) return { status: 'ignored', reason: 'hashtag' }
+
+  const urls = [...new Set(post.imageUrls.map((url) => url.trim()))].filter(isAllowedImageUrl)
+  if (urls.length === 0) return { status: 'ignored', reason: 'no-photo' }
+
+  return {
+    status: 'accepted',
+    images: urls.slice(0, MAX_PHOTOS_PER_POST).map((url) => ({
+      externalId: `fb:${post.postId}:${photoKey(url)}`,
+      postId: post.postId,
+      postMessage: post.message,
+      photoId: undefined,
+      url,
+      createdAt: undefined,
+    })),
+  }
+}
+
+/** Imports the photos of one post sent by Make. Safe to call twice for the same post. */
+export async function importIncomingImages(
+  images: readonly FacebookImage[],
+): Promise<Omit<SyncReport, 'remaining'>> {
+  const posts: PostCache = new Map()
+  let imported = 0
+  let failed = 0
+  for (const image of images) {
+    try {
+      if (await importOne(image, null, posts)) imported += 1
+    } catch (error) {
+      failed += 1
+      console.error(`[facebook] import de ${image.externalId} impossible`, error)
+    }
+  }
+  return { imported, failed }
 }
 
 /** Maps a sync failure to a message the owner can act on, and an HTTP status. */

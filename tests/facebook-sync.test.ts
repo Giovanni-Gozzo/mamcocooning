@@ -14,6 +14,9 @@ vi.mock('@/lib/db', () => ({ requireSql: () => ({ query }), getSql: () => ({ que
 vi.mock('@/lib/ingest', () => ({ ingestImage }))
 const cleanPostText = vi.fn()
 vi.mock('@/lib/post-text', () => ({ cleanPostText }))
+const findPostByExternalId = vi.fn()
+const createScheduledPost = vi.fn()
+vi.mock('@/lib/post-schedule', () => ({ findPostByExternalId, createScheduledPost }))
 vi.mock('@/lib/facebook', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/facebook')>()),
   fetchRecentPosts,
@@ -24,6 +27,9 @@ vi.mock('@/lib/facebook', async (importOriginal) => ({
 const {
   MAX_ATTEMPTS,
   MAX_IMPORTS_PER_RUN,
+  MAX_PHOTOS_PER_POST,
+  importIncomingImages,
+  triageIncomingPost,
   SyncConfigurationError,
   describeSyncFailure,
   syncFacebookPhotos,
@@ -66,23 +72,22 @@ function stubDatabase(options: { known?: readonly string[]; claimed?: readonly s
       const externalId = params[0] as string
       return alreadyClaimed.has(externalId) ? [] : [{ external_id: externalId }]
     }
-    if (statement.startsWith('select id from posts')) {
-      const id = createdPosts.get(params[0] as string)
-      return id === undefined ? [] : [{ id }]
-    }
-    if (statement.startsWith('insert into posts')) {
-      createdPosts.set(params[1] as string, params[0] as string)
-      return [{ id: params[0] }]
-    }
     return []
   })
 }
 
-/** external_id → id of the posts created by the stubbed database. */
-const createdPosts = new Map<string, string>()
+/** external_id → posts known to the stubbed scheduler. */
+const createdPosts = new Map<string, { id: string; publishAt: string }>()
 
-function postInserts(): unknown[][] {
-  return statementsStartingWith('insert into posts').map(([, params]) => params as unknown[])
+/** Each new post takes the next day, from 13 November 2026, like the real scheduler. */
+function stubScheduler() {
+  findPostByExternalId.mockImplementation(async (externalId: string) => createdPosts.get(externalId) ?? null)
+  createScheduledPost.mockImplementation(async ({ externalId }: { externalId: string }) => {
+    const day = 13 + createdPosts.size
+    const post = { id: `post-${createdPosts.size + 1}`, publishAt: `2026-11-${day}T07:00:00.000Z` }
+    createdPosts.set(externalId, post)
+    return post
+  })
 }
 
 function statementsStartingWith(prefix: string): unknown[][] {
@@ -99,6 +104,7 @@ beforeEach(() => {
   vi.stubEnv('FACEBOOK_HASHTAG', '#site')
   query.mockReset()
   createdPosts.clear()
+  stubScheduler()
   cleanPostText.mockReset().mockResolvedValue('Les petits chefs en cuisine')
   ingestImage.mockReset().mockImplementation(async () => {
     photoCounter += 1
@@ -115,7 +121,7 @@ afterEach(() => {
 })
 
 describe('syncFacebookPhotos', () => {
-  test('imports new tagged photos oldest first, dated like the post', async () => {
+  test('imports new tagged photos oldest first, each dated at its publication day', async () => {
     fetchRecentPosts.mockResolvedValue([
       taggedPost('new', ['3'], '2026-11-12T08:00:00+0000'),
       taggedPost('old', ['1'], '2026-11-10T08:00:00+0000'),
@@ -125,17 +131,10 @@ describe('syncFacebookPhotos', () => {
     const report = await syncFacebookPhotos()
 
     expect(report).toEqual({ imported: 2, failed: 0, remaining: 0 })
+    // The older post takes the first free day, the newer one the next day.
     expect(ingestImage.mock.calls.map(([, options]) => options)).toEqual([
-      {
-        source: 'facebook',
-        createdAt: '2026-11-10T08:00:00.000Z',
-        postId: createdPosts.get('fbpost:old'),
-      },
-      {
-        source: 'facebook',
-        createdAt: '2026-11-12T08:00:00.000Z',
-        postId: createdPosts.get('fbpost:new'),
-      },
+      { source: 'facebook', createdAt: '2026-11-13T07:00:00.000Z', postId: 'post-1' },
+      { source: 'facebook', createdAt: '2026-11-14T07:00:00.000Z', postId: 'post-2' },
     ])
     expect(fetchRecentPosts).toHaveBeenCalledWith({ pageId: '12345', accessToken: 'page-token' })
   })
@@ -148,56 +147,34 @@ describe('syncFacebookPhotos', () => {
 
     expect(cleanPostText).toHaveBeenCalledTimes(1)
     expect(cleanPostText).toHaveBeenCalledWith('Les petits chefs en cuisine #site')
-    const [inserted] = postInserts()
-    expect(inserted?.slice(1)).toEqual([
-      'fbpost:p',
-      'Les petits chefs en cuisine',
-      '2026-11-12T08:00:00.000Z',
-    ])
+    expect(createScheduledPost).toHaveBeenCalledTimes(1)
+    expect(createScheduledPost).toHaveBeenCalledWith({
+      externalId: 'fbpost:p',
+      body: 'Les petits chefs en cuisine',
+    })
     const postIds = ingestImage.mock.calls.map(([, options]) => options.postId)
-    expect(new Set(postIds)).toEqual(new Set([inserted?.[0]]))
+    expect(postIds).toEqual(['post-1', 'post-1'])
   })
 
   test('reuses the publication created by an earlier run for later photos of a post', async () => {
     fetchRecentPosts.mockResolvedValue([taggedPost('p', ['2'], '2026-11-12T08:00:00+0000')])
     stubDatabase()
-    createdPosts.set('fbpost:p', 'existing-post')
+    createdPosts.set('fbpost:p', { id: 'existing-post', publishAt: '2026-11-12T07:00:00.000Z' })
 
     await syncFacebookPhotos()
 
     expect(cleanPostText).not.toHaveBeenCalled()
-    expect(postInserts()).toEqual([])
-    expect(ingestImage.mock.calls[0]?.[1].postId).toBe('existing-post')
+    expect(createScheduledPost).not.toHaveBeenCalled()
+    expect(ingestImage.mock.calls[0]?.[1]).toMatchObject({
+      postId: 'existing-post',
+      createdAt: '2026-11-12T07:00:00.000Z',
+    })
   })
 
-  test('picks up a publication another run created at the same moment', async () => {
+  test('counts the photo as failed when its publication cannot be created', async () => {
     fetchRecentPosts.mockResolvedValue([taggedPost('p', ['1'], '2026-11-12T08:00:00+0000')])
     stubDatabase()
-    const answer = query.getMockImplementation()
-    let lookups = 0
-    query.mockImplementation(async (statement: string, params?: unknown[]) => {
-      if (statement.startsWith('insert into posts')) return []
-      if (statement.startsWith('select id from posts')) {
-        lookups += 1
-        return lookups === 1 ? [] : [{ id: 'raced-post' }]
-      }
-      return answer?.(statement, params)
-    })
-
-    await syncFacebookPhotos()
-
-    expect(ingestImage.mock.calls[0]?.[1].postId).toBe('raced-post')
-  })
-
-  test('counts the photo as failed when its publication cannot be found', async () => {
-    fetchRecentPosts.mockResolvedValue([taggedPost('p', ['1'], '2026-11-12T08:00:00+0000')])
-    stubDatabase()
-    const answer = query.getMockImplementation()
-    query.mockImplementation(async (statement: string, params?: unknown[]) => {
-      if (statement.startsWith('insert into posts')) return []
-      if (statement.startsWith('select id from posts')) return []
-      return answer?.(statement, params)
-    })
+    createScheduledPost.mockRejectedValueOnce(new Error('introuvable'))
 
     const report = await syncFacebookPhotos()
 
@@ -358,5 +335,68 @@ describe('describeSyncFailure', () => {
 
   test('falls back to a generic message for anything else', () => {
     expect(describeSyncFailure(new Error('ECONNRESET')).status).toBe(500)
+  })
+})
+
+describe('posts sent by Make', () => {
+  const cdn = (name: string) => `https://scontent.xx.fbcdn.net/v/t39/${name}.jpg?oh=signed`
+  const incoming = (overrides: Partial<{ message: string; imageUrls: string[] }> = {}) => ({
+    postId: '111_222',
+    message: 'Pâte à sel ce matin #site',
+    imageUrls: [cdn('9001_n')],
+    ...overrides,
+  })
+
+  test('ignore a post without the hashtag', () => {
+    expect(triageIncomingPost(incoming({ message: 'Fermé lundi' }))).toEqual({
+      status: 'ignored',
+      reason: 'hashtag',
+    })
+  })
+
+  test('ignore a post without any usable photo', () => {
+    expect(triageIncomingPost(incoming({ imageUrls: ['https://evil.example/x.jpg'] }))).toEqual({
+      status: 'ignored',
+      reason: 'no-photo',
+    })
+  })
+
+  test('keep each photo once, identified by its file name, and cap large albums', () => {
+    const names = Array.from({ length: MAX_PHOTOS_PER_POST + 2 }, (_, index) => `${index}_n`)
+    const urls = [cdn('0_n'), ...names.map(cdn)]
+
+    const verdict = triageIncomingPost(incoming({ imageUrls: urls }))
+
+    expect(verdict.status).toBe('accepted')
+    if (verdict.status !== 'accepted') return
+    expect(verdict.images).toHaveLength(MAX_PHOTOS_PER_POST)
+    expect(verdict.images[0]).toMatchObject({
+      externalId: 'fb:111_222:0_n.jpg',
+      postId: '111_222',
+      postMessage: 'Pâte à sel ce matin #site',
+      url: cdn('0_n'),
+    })
+  })
+
+  test('import the photos straight from their URL, in the publication of their day', async () => {
+    stubDatabase()
+    const verdict = triageIncomingPost(incoming({ imageUrls: [cdn('1_n'), cdn('2_n')] }))
+    if (verdict.status !== 'accepted') throw new Error('attendu : accepté')
+
+    const report = await importIncomingImages(verdict.images)
+
+    expect(report).toEqual({ imported: 2, failed: 0 })
+    expect(downloadImage.mock.calls.map(([url]) => url)).toEqual([cdn('1_n'), cdn('2_n')])
+    expect(createScheduledPost).toHaveBeenCalledTimes(1)
+    expect(ingestImage.mock.calls.map(([, options]) => options.postId)).toEqual(['post-1', 'post-1'])
+  })
+
+  test('count a photo that fails without stopping the others', async () => {
+    stubDatabase()
+    downloadImage.mockRejectedValueOnce(new Error('CDN'))
+    const verdict = triageIncomingPost(incoming({ imageUrls: [cdn('1_n'), cdn('2_n')] }))
+    if (verdict.status !== 'accepted') throw new Error('attendu : accepté')
+
+    await expect(importIncomingImages(verdict.images)).resolves.toEqual({ imported: 1, failed: 1 })
   })
 })

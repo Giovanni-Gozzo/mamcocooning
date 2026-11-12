@@ -39,6 +39,10 @@ export const SCHEMA_STATEMENTS: readonly string[] = [
      source      text not null default 'facebook',
      created_at  timestamptz not null default now()
    )`,
+  // Day a Facebook post appears on the site: at most one per day, the extras
+  // wait in line and fill the following days (see lib/post-schedule.ts).
+  `alter table posts add column if not exists publish_on date`,
+  `create unique index if not exists posts_publish_on_key on posts (publish_on) where publish_on is not null`,
   `alter table photos add column if not exists post_id text references posts(id) on delete set null`,
   `create index if not exists photos_post_idx on photos (post_id)`,
   // Ledger of every Facebook image ever imported. It outlives the photo row, so

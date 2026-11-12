@@ -124,6 +124,7 @@ const FEED_SQL = `
            p.*
       from photos p
      where p.is_published = true
+       and p.created_at <= now() -- scheduled posts stay hidden until their day
   )
   select g.item_id,
          max(g.created_at) as created_at,

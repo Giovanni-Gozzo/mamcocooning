@@ -5,7 +5,10 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 
 interface FacebookSyncPanelProps {
+  /** Graph API credentials present: the "Récupérer maintenant" button works. */
   readonly isConfigured: boolean
+  /** Make sends the posts on its own (FACEBOOK_WEBHOOK_SECRET is set). */
+  readonly isWebhookConfigured: boolean
   readonly hashtag: string
 }
 
@@ -28,7 +31,11 @@ function describeReport(report: SyncReport): string {
 }
 
 /** Shows how Facebook photos reach the site, and lets Sigrid fetch them right away. */
-export function FacebookSyncPanel({ isConfigured, hashtag }: FacebookSyncPanelProps) {
+export function FacebookSyncPanel({
+  isConfigured,
+  isWebhookConfigured,
+  hashtag,
+}: FacebookSyncPanelProps) {
   const router = useRouter()
   const [status, setStatus] = useState<string | null>(null)
   const [isRunning, setIsRunning] = useState(false)
@@ -59,10 +66,19 @@ export function FacebookSyncPanel({ isConfigured, hashtag }: FacebookSyncPanelPr
     <section className="rounded-[2.5rem] bg-sand/70 p-8 ring-1 ring-clay/45">
       <h2 className="text-2xl">Depuis Facebook</h2>
       <p className="mt-2 leading-relaxed text-ink-soft">
-        Ajoutez <strong className="font-bold text-ink">#{hashtag}</strong> dans un post de la page
-        Facebook : ses photos arrivent ici chaque soir, rangées automatiquement. Le texte du post
-        n&rsquo;est jamais repris sur le site.
+        Ajoutez <strong className="font-bold text-ink">#{hashtag}</strong> dans un post de la Page
+        Mam Cocooning : il devient une publication des Actualités, avec son texte nettoyé (prénoms
+        retirés) et ses photos rangées automatiquement.{' '}
+        <strong className="font-bold text-ink">Un post par jour au maximum</strong> : s&rsquo;il y en
+        a plusieurs, les suivants sortent les jours d&rsquo;après. Ils apparaissent déjà ci-dessus,
+        avec leur date de sortie.
       </p>
+
+      {isWebhookConfigured && (
+        <p className="mt-5 rounded-2xl bg-sage/15 px-4 py-3 text-sm font-semibold text-sage-deep ring-1 ring-sage/40">
+          Branché via Make : les posts arrivent tout seuls.
+        </p>
+      )}
 
       {isConfigured ? (
         <>
@@ -82,10 +98,13 @@ export function FacebookSyncPanel({ isConfigured, hashtag }: FacebookSyncPanelPr
           )}
         </>
       ) : (
-        <p className="mt-5 rounded-2xl bg-cream px-4 py-3 text-sm text-ink-soft ring-1 ring-clay/50">
-          Pas encore branché : il manque <code className="font-mono font-bold">FACEBOOK_PAGE_ID</code>{' '}
-          et <code className="font-mono font-bold">FACEBOOK_PAGE_ACCESS_TOKEN</code> dans Vercel.
-        </p>
+        !isWebhookConfigured && (
+          <p className="mt-5 rounded-2xl bg-cream px-4 py-3 text-sm text-ink-soft ring-1 ring-clay/50">
+            Pas encore branché : il manque{' '}
+            <code className="font-mono font-bold">FACEBOOK_WEBHOOK_SECRET</code> dans Vercel et le
+            scénario Make (voir « Photos depuis Facebook » dans le README).
+          </p>
+        )
       )}
     </section>
   )

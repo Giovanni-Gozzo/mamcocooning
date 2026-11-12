@@ -38,6 +38,10 @@ export const env = {
   get facebookHashtag(): string {
     return (read('FACEBOOK_HASHTAG') ?? 'site').replace(/^#/, '')
   },
+  /** Shared with Make: it signs every post sent to /api/webhooks/facebook. */
+  get facebookWebhookSecret(): string | null {
+    return read('FACEBOOK_WEBHOOK_SECRET')
+  },
   get cronSecret(): string | null {
     return read('CRON_SECRET')
   },
@@ -53,6 +57,8 @@ export const isAdminConfigured = (): boolean =>
 
 export const isFacebookConfigured = (): boolean =>
   env.facebookPageId !== null && env.facebookPageToken !== null
+
+export const isFacebookWebhookConfigured = (): boolean => env.facebookWebhookSecret !== null
 
 /** Lists what still needs configuring, for the admin diagnostics panel. */
 export function missingAdminConfig(): readonly string[] {

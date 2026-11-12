@@ -89,6 +89,10 @@ Dans **Settings › Domains**, ajouter `mamcocooning.fr` et suivre les instructi
 | `BLOB_READ_WRITE_TOKEN` | L'envoi de photos est désactivé |
 | `GEMINI_API_KEY` | Les photos arrivent dans « Le quotidien », à reclasser |
 | `NEXT_PUBLIC_SITE_URL` | Vaut `https://mamcocooning.fr` |
+| `FACEBOOK_WEBHOOK_SECRET` | Make ne peut pas envoyer les posts Facebook au site |
+| `FACEBOOK_HASHTAG` | Vaut `site` (seuls les posts contenant `#site` arrivent sur le site) |
+| `FACEBOOK_PAGE_ID` / `FACEBOOK_PAGE_ACCESS_TOKEN` | Variante API Graph seulement : pas de lecture directe de la Page |
+| `CRON_SECRET` | Variante API Graph seulement : pas de récupération quotidienne automatique |
 
 ---
 
@@ -108,17 +112,34 @@ Chaque photo est ré-encodée en WebP, redimensionnée, et **toutes ses métadon
 
 Sigrid publie sur la page Facebook de la MAM comme d'habitude. **Si le post contient `#site`**, ses photos arrivent sur le site, passent par le même traitement qu'un envoi depuis `/admin` (EXIF supprimés, classement et description par Gemini) et forment **une publication des Actualités** à la date du post, avec le texte du post **nettoyé par Gemini** (hashtags, prénoms d'enfants et infos personnelles retirés ; sans clé Gemini, aucun texte n'est publié).
 
-- La récupération tourne **chaque jour à 18 h UTC** (`vercel.json`). Le bouton **« Récupérer maintenant »** dans `/admin` la lance tout de suite.
+- **Un post par jour au maximum.** Le premier post `#site` du jour sort le jour même (à 8 h, ou tout de suite s'il arrive après) ; s'il y en a plusieurs, les suivants sortent les jours d'après, et les jours sans post rattrapent la file. Les posts programmés sont visibles dans `/admin` avec leur date « En ligne le … », mais pas sur le site avant leur jour.
 - Une photo retirée du site depuis `/admin` **ne revient jamais**, même si le post reste sur Facebook (registre `facebook_imports`).
-- Au plus 8 photos par passage, pour rester dans le temps d'exécution. Le reste arrive au passage suivant.
-- Seuls les **25 derniers posts** de la page sont examinés à chaque passage : un vieux post tagué après coup ne sera pas récupéré.
-- Une photo qui échoue (Facebook indisponible…) est retentée aux passages suivants, **3 fois au maximum**. Au-delà, l'envoyer à la main depuis `/admin`.
-- Les photos sont récupérées dans leur **taille d'origine** (pas l'aperçu réduit du fil).
-- Seuls les posts avec photo(s) sont pris en compte ; les vidéos sont ignorées.
+- Au plus 10 photos par post. Seuls les posts avec photo(s) sont pris en compte ; les vidéos sont ignorées.
+- Seuls les posts **de la Page Mam Cocooning** sont lus : rien ne vient des profils personnels.
 
 > ⚠️ Ne mettre `#site` que sur des photos dont **les parents ont signé l'autorisation de diffusion sur internet**.
 
-### Mise en place (une seule fois)
+### Mise en place avec Make (recommandé, une seule fois)
+
+Make relaie chaque nouveau post de la Page vers le site. Pas d'app Meta ni de jeton à copier : on se connecte simplement à Facebook depuis Make. L'offre gratuite suffit.
+
+1. **Créer le secret.** Dans un terminal : `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Ajouter la valeur dans Vercel (*Settings › Environment Variables*) sous le nom `FACEBOOK_WEBHOOK_SECRET`, puis redéployer.
+2. **Mettre à jour la base** : dans `/admin`, cliquer sur **« Initialiser la base »**.
+3. **Créer un compte** sur [make.com](https://www.make.com) (offre Free), puis **Create a new scenario**.
+4. **Premier module : Facebook Pages › Watch Posts.** *Create a connection* → se connecter avec le compte Facebook qui gère la Page → autoriser la Page **Mam Cocooning**. Choisir la Page Mam Cocooning, *Limit* : 5.
+5. **Second module : HTTP › Make a request.**
+   - *URL* : `https://mamcocooning.fr/api/webhooks/facebook` — *Method* : `POST`
+   - *Headers* : `Authorization` = `Bearer ` suivi du secret de l'étape 1
+   - *Body type* : `application/x-www-form-urlencoded`, avec les champs `id` = Post ID, `message` = Message, `full_picture` = Full picture
+   - Facultatif, pour les posts à plusieurs photos : un champ `images` contenant les adresses des photos des pièces jointes, séparées par des virgules.
+6. **Planification** (horloge en bas à gauche) : *Every 3 hours* — l'offre gratuite (1 000 opérations/mois) le permet largement. Enregistrer, puis activer le scénario (interrupteur **ON**).
+7. Publier sur la Page un post test avec `#site`, puis cliquer sur **Run once** dans Make : le post apparaît dans `/admin` en quelques secondes.
+
+Le panneau « Depuis Facebook » de `/admin` affiche **« Branché via Make »** une fois `FACEBOOK_WEBHOOK_SECRET` en place.
+
+### Variante sans Make : API Graph de Meta (avancé)
+
+Le site sait aussi lire la Page directement, chaque jour à 18 h UTC (`vercel.json`) ou via le bouton **« Récupérer maintenant »**. Cela demande une app Meta et un jeton de Page :
 
 Il faut que le compte Facebook utilisé soit **administrateur de la page** de la MAM.
 

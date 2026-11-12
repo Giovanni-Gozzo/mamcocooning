@@ -13,9 +13,9 @@ import { SESSION_COOKIE, isValidSessionToken } from '@/lib/session'
 
 /**
  * Reachable even in private mode, so the owner can always get back in. The
- * cron routes check their own secret and must not be rewritten to /bientot.
+ * cron and webhook routes check their own secret and must not be rewritten to /bientot.
  */
-const ALWAYS_OPEN = ['/admin', '/api/auth', '/api/cron', '/bientot']
+const ALWAYS_OPEN = ['/admin', '/api/auth', '/api/cron', '/api/webhooks', '/bientot']
 
 function isPrivateMode(): boolean {
   return process.env.SITE_PRIVATE === 'true'

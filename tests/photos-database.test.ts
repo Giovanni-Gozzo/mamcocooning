@@ -82,7 +82,16 @@ describe('listPhotos', () => {
 
     await listPhotos({ categorySlug: 'musique', limit: 12, offset: 24 })
 
-    expect(query.mock.calls[1]?.[1]).toEqual(['musique', 12, 24])
+    expect(query.mock.calls[1]?.[1]).toEqual(['musique', 12, 24, false])
+  })
+
+  test('asks for scheduled photos only when the admin wants them', async () => {
+    withCount(1, [PHOTO_ROW])
+
+    await listPhotos({ includeScheduled: true })
+
+    expect(query.mock.calls[1]?.[0]).toContain('created_at <= now()')
+    expect(query.mock.calls[1]?.[1]?.[3]).toBe(true)
   })
 
   test('sends null for the category when none is requested', async () => {

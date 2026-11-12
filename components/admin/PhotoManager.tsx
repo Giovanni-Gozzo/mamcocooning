@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Lightbox } from '@/components/gallery/Lightbox'
+import { formatFeedDate } from '@/lib/feed-format'
 import type { Category, Photo } from '@/lib/types'
 
 const LOW_CONFIDENCE_THRESHOLD = 0.6
@@ -114,6 +115,11 @@ export function PhotoManager({ photos, categories, isReady }: PhotoManagerProps)
                   sizes="(max-width: 640px) 100vw, 33vw"
                   className="object-cover"
                 />
+                {Date.parse(photo.createdAt) > Date.now() && (
+                  <span className="absolute right-3 bottom-3 rounded-full bg-ink/80 px-3 py-1 text-[0.7rem] font-bold text-cream">
+                    En ligne le {formatFeedDate(photo.createdAt)}
+                  </span>
+                )}
                 {photo.confidence !== null && photo.confidence < LOW_CONFIDENCE_THRESHOLD && (
                   <span className="absolute top-3 left-3 rounded-full bg-honey px-3 py-1 text-[0.7rem] font-bold text-ink">
                     À vérifier

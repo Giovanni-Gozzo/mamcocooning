@@ -54,6 +54,8 @@ export interface PhotoQuery {
   readonly categorySlug?: string
   readonly limit?: number
   readonly offset?: number
+  /** Also return photos of posts planned for a later day (admin only). */
+  readonly includeScheduled?: boolean
 }
 
 /** Result of asking Gemini to sort an uploaded photo. */
