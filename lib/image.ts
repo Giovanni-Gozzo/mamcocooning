@@ -6,6 +6,7 @@
  * without metadata, rotated upright, and capped in size.
  */
 import sharp from 'sharp'
+import { UserFacingError } from './errors'
 
 const MAX_EDGE_PX = 2200
 const WEB_QUALITY = 82
@@ -42,6 +43,12 @@ export async function prepareForStorage(input: ArrayBuffer): Promise<PreparedIma
     .resize({ width: MAX_EDGE_PX, height: MAX_EDGE_PX, fit: 'inside', withoutEnlargement: true })
     .webp({ quality: WEB_QUALITY })
     .toBuffer({ resolveWithObject: true })
+    .catch((error: unknown) => {
+      console.error('[image] fichier illisible', error)
+      throw new UserFacingError(
+        'Cette image n’a pas pu être lue. Essayez une photo JPEG ou PNG (sur iPhone : Partager › Enregistrer l’image).',
+      )
+    })
 
   return {
     data,

@@ -95,7 +95,9 @@ describe('prepareForStorage', () => {
   test('rejects a buffer that is not an image', async () => {
     const notAnImage = new TextEncoder().encode('bonjour').buffer
 
-    await expect(prepareForStorage(notAnImage as ArrayBuffer)).rejects.toThrow()
+    await expect(prepareForStorage(notAnImage as ArrayBuffer)).rejects.toThrow(
+      'Cette image n’a pas pu être lue',
+    )
   })
 })
 

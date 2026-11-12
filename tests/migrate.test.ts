@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const query = vi.fn()
 
-vi.mock('@/lib/db', () => ({ getSql: () => ({ query }), requireSql: () => ({ query }) }))
+vi.mock('@/lib/db', () => ({
+  getSql: () => ({ query }),
+  requireSql: () => ({ query }),
+  requireRawSql: () => ({ query }),
+}))
 
 const { runMigration } = await import('@/lib/migrate')
 const { SCHEMA_STATEMENTS } = await import('@/lib/schema')

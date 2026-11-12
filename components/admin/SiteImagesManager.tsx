@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Lightbox, type LightboxPhoto } from '@/components/gallery/Lightbox'
+import { ImagePreparationError, prepareImageForUpload, readApiResponse } from '@/lib/client-image'
 import type { SiteImage, SiteImageGroup } from '@/lib/site-images'
 
 interface SiteImagesManagerProps {
@@ -29,19 +30,23 @@ export function SiteImagesManager({ images, isReady }: SiteImagesManagerProps) {
       : [{ id: image.id, slot: image.id, url: image.url, alt: image.label, caption: image.label }],
   )
 
-  async function send(slot: string, init: RequestInit, fallback: string) {
+  async function send(slot: string, init: () => Promise<RequestInit>, fallback: string) {
     setBusySlot(slot)
     setError(null)
     try {
-      const response = await fetch(`/api/admin/site-images/${slot}`, init)
-      const payload = await response.json()
-      if (!response.ok || payload.success !== true) {
-        setError(payload.error ?? fallback)
+      const response = await fetch(`/api/admin/site-images/${slot}`, await init())
+      const result = await readApiResponse<unknown>(response, fallback)
+      if (!result.ok) {
+        setError(result.error)
         return
       }
       router.refresh()
-    } catch {
-      setError(`${fallback} Vérifiez votre réseau.`)
+    } catch (caught) {
+      setError(
+        caught instanceof ImagePreparationError
+          ? caught.message
+          : `${fallback} Vérifiez votre connexion internet.`,
+      )
     } finally {
       setBusySlot(null)
     }
@@ -49,9 +54,15 @@ export function SiteImagesManager({ images, isReady }: SiteImagesManagerProps) {
 
   function replace(slot: string, file: File | undefined) {
     if (file === undefined) return
-    const body = new FormData()
-    body.set('file', file)
-    void send(slot, { method: 'POST', body }, 'Remplacement impossible.')
+    void send(
+      slot,
+      async () => {
+        const body = new FormData()
+        body.set('file', await prepareImageForUpload(file))
+        return { method: 'POST', body }
+      },
+      'Remplacement impossible.',
+    )
   }
 
   return (
@@ -114,7 +125,7 @@ export function SiteImagesManager({ images, isReady }: SiteImagesManagerProps) {
                           {isBusy ? 'Envoi…' : image.url === null ? 'Ajouter' : 'Remplacer'}
                           <input
                             type="file"
-                            accept="image/*"
+                            accept="image/*,.heic,.heif"
                             className="sr-only"
                             disabled={!isReady || isBusy}
                             onChange={(event) => {
@@ -128,7 +139,7 @@ export function SiteImagesManager({ images, isReady }: SiteImagesManagerProps) {
                             type="button"
                             disabled={!isReady || isBusy}
                             onClick={() =>
-                              void send(image.id, { method: 'DELETE' }, 'Opération impossible.')
+                              void send(image.id, async () => ({ method: 'DELETE' }), 'Opération impossible.')
                             }
                             className="flex-1 rounded-xl bg-cream px-3 py-2.5 text-sm font-semibold text-ink ring-1 ring-clay/60 disabled:opacity-50"
                           >

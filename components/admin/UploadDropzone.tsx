@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import { ImagePreparationError, prepareImageForUpload, readApiResponse } from '@/lib/client-image'
 import type { Category, Photo } from '@/lib/types'
 
 type UploadState = 'pending' | 'sending' | 'done' | 'error'
@@ -44,20 +45,24 @@ export function UploadDropzone({ categories, isReady }: UploadDropzoneProps) {
 
     try {
       const body = new FormData()
-      body.append('file', file)
+      body.append('file', await prepareImageForUpload(file))
 
       const response = await fetch('/api/photos', { method: 'POST', body })
-      const payload = await response.json()
+      const result = await readApiResponse<{ photo: Photo }>(response, 'Envoi impossible.')
 
-      if (!response.ok || payload.success !== true) {
-        updateItem(item.key, { state: 'error', error: payload.error ?? 'Envoi impossible.' })
+      if (!result.ok) {
+        updateItem(item.key, { state: 'error', error: result.error })
         return
       }
 
-      updateItem(item.key, { state: 'done', photo: payload.data.photo, error: null })
+      updateItem(item.key, { state: 'done', photo: result.data.photo, error: null })
       router.refresh()
-    } catch {
-      updateItem(item.key, { state: 'error', error: 'Envoi impossible. Vérifiez votre réseau.' })
+    } catch (error) {
+      const message =
+        error instanceof ImagePreparationError
+          ? error.message
+          : 'Envoi impossible. Vérifiez votre connexion internet.'
+      updateItem(item.key, { state: 'error', error: message })
     }
   }
 
@@ -127,7 +132,7 @@ export function UploadDropzone({ categories, isReady }: UploadDropzoneProps) {
         <input
           ref={inputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif"
+          accept="image/*,.heic,.heif"
           multiple
           className="sr-only"
           onChange={(event) => {
