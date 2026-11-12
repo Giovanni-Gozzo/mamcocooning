@@ -1,7 +1,6 @@
 /**
  * Environment access. Every optional integration degrades gracefully: without a
- * database the site still renders the photos committed to the repository, and
- * without a Gemini key uploads fall back to manual category selection.
+ * database the site still renders the photos committed to the repository.
  */
 
 function read(name: string): string | null {
@@ -16,9 +15,6 @@ export const env = {
   get blobToken(): string | null {
     return read('BLOB_READ_WRITE_TOKEN')
   },
-  get geminiApiKey(): string | null {
-    return read('GEMINI_API_KEY') ?? read('GOOGLE_GENERATIVE_AI_API_KEY')
-  },
   get adminPasswordHash(): string | null {
     return read('ADMIN_PASSWORD_HASH')
   },
@@ -27,19 +23,6 @@ export const env = {
   },
   get siteUrl(): string {
     return read('NEXT_PUBLIC_SITE_URL') ?? 'https://mamcocooning.fr'
-  },
-  get facebookPageId(): string | null {
-    return read('FACEBOOK_PAGE_ID')
-  },
-  get facebookPageToken(): string | null {
-    return read('FACEBOOK_PAGE_ACCESS_TOKEN')
-  },
-  /** Only posts carrying this hashtag reach the site. Stored without the "#". */
-  get facebookHashtag(): string {
-    return (read('FACEBOOK_HASHTAG') ?? 'site').replace(/^#/, '')
-  },
-  get cronSecret(): string | null {
-    return read('CRON_SECRET')
   },
   get isProduction(): boolean {
     return process.env.NODE_ENV === 'production'
@@ -51,9 +34,6 @@ export const isBlobConfigured = (): boolean => env.blobToken !== null
 export const isAdminConfigured = (): boolean =>
   env.adminPasswordHash !== null && env.sessionSecret !== null
 
-export const isFacebookConfigured = (): boolean =>
-  env.facebookPageId !== null && env.facebookPageToken !== null
-
 /** Lists what still needs configuring, for the admin diagnostics panel. */
 export function missingAdminConfig(): readonly string[] {
   const missing: string[] = []
@@ -61,6 +41,5 @@ export function missingAdminConfig(): readonly string[] {
   if (env.sessionSecret === null) missing.push('SESSION_SECRET')
   if (env.databaseUrl === null) missing.push('DATABASE_URL')
   if (env.blobToken === null) missing.push('BLOB_READ_WRITE_TOKEN')
-  if (env.geminiApiKey === null) missing.push('GEMINI_API_KEY')
   return missing
 }

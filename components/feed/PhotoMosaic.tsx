@@ -1,4 +1,6 @@
 import Image from 'next/image'
+import { PlayBadge } from '@/components/ui/PlayBadge'
+import { thumbnailUrl } from '@/lib/media'
 import type { Photo } from '@/lib/types'
 
 /** At most this many tiles; the last one shows how many photos remain. */
@@ -35,16 +37,17 @@ export function PhotoMosaic({ photos, onOpen }: PhotoMosaicProps) {
             key={photo.id}
             type="button"
             onClick={() => onOpen(index)}
-            aria-label={`Agrandir la photo : ${photo.alt}`}
+            aria-label={`${photo.mediaType === 'video' ? 'Lire la vidéo' : 'Agrandir la photo'} : ${photo.alt}`}
             className={`group relative overflow-hidden bg-clay/30 focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-terracotta ${layout.tiles[index]}`}
           >
             <Image
-              src={photo.url}
+              src={thumbnailUrl(photo)}
               alt={photo.alt}
               fill
               sizes="(max-width: 768px) 100vw, 640px"
               className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
             />
+            {photo.mediaType === 'video' && !(isLast && hidden > 0) && <PlayBadge />}
             {isLast && hidden > 0 && (
               <span className="absolute inset-0 grid place-items-center bg-ink/55 text-3xl font-bold text-cream">
                 +{hidden}

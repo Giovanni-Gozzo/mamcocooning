@@ -2,16 +2,17 @@
 
 Site de la Maison d'Assistantes Maternelles **Mam Cocooning**, à Entraigues-sur-la-Sorgue.
 
-Next.js 16 (App Router) · Tailwind CSS 4 · Motion · Vercel Blob · Neon Postgres · Gemini
+Next.js 16 (App Router) · Tailwind CSS 4 · Motion · Vercel Blob · Neon Postgres · ffmpeg
 
 ---
 
 ## Ce que fait le site
 
-- **Site public** : accueil animé, visite de la maison pièce par pièce, journée type, équipe, contact.
-- **Actualités** : un fil de publications (date, texte, photos, activité), alimenté par Facebook (`#site`) et par les envois de `/admin`, filtrable par activité. Les catégories n'existent que si au moins une photo s'y trouve.
-- **Espace privé** (`/admin`) : Sigrid s'y connecte avec un mot de passe unique, dépose ses photos, et **Gemini les range automatiquement** dans la bonne catégorie en rédigeant leur description.
-- **Repli intégré** : sans base de données configurée, le site sert les 64 photos versionnées dans le dépôt. Il n'est jamais vide, jamais cassé.
+- **Site public** : accueil animé, visite de la maison pièce par pièce, actualités, équipe, contact.
+- **Actualités** : un fil de publications datées (texte, photos, vidéos), écrites depuis l'espace privé, comme sur Facebook.
+- **Espace privé** (`/admin`) : Sigrid s'y connecte avec un mot de passe unique pour publier, retirer une photo ou une vidéo, et changer les photos de la page d'accueil.
+- **Vie privée** : photos et vidéos sont ré-encodées sans aucune métadonnée — la position GPS que les téléphones enregistrent (l'adresse de la maison) disparaît.
+- **Repli intégré** : sans base de données configurée, le site sert les photos versionnées dans le dépôt. Il n'est jamais vide, jamais cassé.
 
 ---
 
@@ -59,21 +60,11 @@ SESSION_SECRET=…
 
 > Le mot de passe en clair n'est jamais stocké : seule son empreinte scrypt l'est.
 
-### 4. Ajouter la clé Gemini
+### 4. Initialiser la base
 
-Créer une clé gratuite sur [aistudio.google.com/apikey](https://aistudio.google.com/apikey), puis l'ajouter :
+Redéployer, ouvrir `/admin` et se connecter. La base se met à jour toute seule à la première visite (et après chaque mise à jour du site) ; le bouton **« Initialiser la base »**, en bas de page, le fait aussi à la demande et importe les photos déjà présentes. L'opération est rejouable sans risque.
 
-```
-GEMINI_API_KEY=…
-```
-
-Sans cette clé, l'envoi de photos fonctionne toujours : elles arrivent simplement dans « Le quotidien », à reclasser à la main.
-
-### 5. Initialiser la base
-
-Redéployer, ouvrir `/admin`, se connecter, puis cliquer sur **« Initialiser la base »** en bas de page. Cela crée les tables, enregistre les catégories et importe les photos déjà présentes. L'opération est rejouable sans risque.
-
-### 6. Brancher le domaine
+### 5. Brancher le domaine
 
 Dans **Settings › Domains**, ajouter `mamcocooning.fr` et suivre les instructions DNS de Vercel. Le fichier `CNAME` à la racine ne sert plus qu'à GitHub Pages ; il peut être retiré une fois la bascule faite.
 
@@ -87,50 +78,21 @@ Dans **Settings › Domains**, ajouter `mamcocooning.fr` et suivre les instructi
 | `SESSION_SECRET` | Connexion à `/admin` impossible |
 | `DATABASE_URL` | Le site sert les photos du dépôt, l'envoi est désactivé |
 | `BLOB_READ_WRITE_TOKEN` | L'envoi de photos est désactivé |
-| `GEMINI_API_KEY` | Les photos arrivent dans « Le quotidien », à reclasser |
 | `NEXT_PUBLIC_SITE_URL` | Vaut `https://mamcocooning.fr` |
 
 ---
 
-## Comment Sigrid publie une photo
+## Comment Sigrid publie
 
-1. Ouvrir `mamcocooning.fr/admin` et se connecter.
-2. Glisser ses photos, ou appuyer sur **Choisir des photos** (ça marche depuis un téléphone).
-3. Chaque photo est nettoyée, analysée, rangée et publiée. Le site se met à jour seul.
-4. Si une photo est mal rangée, la liste du dessous permet de changer sa catégorie ou de la retirer.
-5. Toucher une photo l'affiche en entier. Les photos de la maison (visite pièce par pièce) et les portraits de l'équipe se remplacent dans **« Photos de la maison et de l'équipe »**, avec un bouton pour revenir à l'originale.
+1. Ouvrir `mamcocooning.fr/admin` et se connecter (ça marche depuis un téléphone).
+2. Dans **« Nouvelle publication »**, écrire un petit texte, puis **Ajouter des photos ou des vidéos** (jusqu'à 20).
+3. Appuyer sur **Publier** : chaque fichier est envoyé, nettoyé (et les vidéos converties), puis la publication apparaît d'un coup dans les Actualités et sur l'accueil.
+4. Toucher une photo l'affiche en entier. Une photo ou une vidéo peut être retirée du site depuis la liste du dessous.
+5. **« Photos de la page d'accueil »** : chaque pièce de la visite de la maison et les portraits de l'équipe se remplacent en un geste, avec un bouton pour revenir à l'originale.
 
-Chaque photo est ré-encodée en WebP, redimensionnée, et **toutes ses métadonnées EXIF sont supprimées** — y compris les coordonnées GPS que les téléphones enregistrent, qui correspondent à l'adresse de la maison.
-
----
-
-## Photos depuis Facebook
-
-Sigrid publie sur la page Facebook de la MAM comme d'habitude. **Si le post contient `#site`**, ses photos arrivent sur le site, passent par le même traitement qu'un envoi depuis `/admin` (EXIF supprimés, classement et description par Gemini) et forment **une publication des Actualités** à la date du post, avec le texte du post **nettoyé par Gemini** (hashtags, prénoms d'enfants et infos personnelles retirés ; sans clé Gemini, aucun texte n'est publié).
-
-- La récupération tourne **chaque jour à 18 h UTC** (`vercel.json`). Le bouton **« Récupérer maintenant »** dans `/admin` la lance tout de suite.
-- Une photo retirée du site depuis `/admin` **ne revient jamais**, même si le post reste sur Facebook (registre `facebook_imports`).
-- Au plus 8 photos par passage, pour rester dans le temps d'exécution. Le reste arrive au passage suivant.
-- Seuls les **25 derniers posts** de la page sont examinés à chaque passage : un vieux post tagué après coup ne sera pas récupéré.
-- Une photo qui échoue (Facebook indisponible…) est retentée aux passages suivants, **3 fois au maximum**. Au-delà, l'envoyer à la main depuis `/admin`.
-- Les photos sont récupérées dans leur **taille d'origine** (pas l'aperçu réduit du fil).
-- Seuls les posts avec photo(s) sont pris en compte ; les vidéos sont ignorées.
-
-> ⚠️ Ne mettre `#site` que sur des photos dont **les parents ont signé l'autorisation de diffusion sur internet**.
-
-### Mise en place (une seule fois)
-
-Il faut que le compte Facebook utilisé soit **administrateur de la page** de la MAM.
-
-1. **Créer l'application Meta.** Sur [developers.facebook.com/apps](https://developers.facebook.com/apps), *Créer une app* › cas d'usage « Autre » › type **Entreprise**. Laisser l'app en mode *Développement* : pour lire sa propre page en tant qu'admin, aucune validation Meta n'est nécessaire.
-2. **Obtenir un jeton utilisateur.** Ouvrir l'[explorateur de l'API Graph](https://developers.facebook.com/tools/explorer/), choisir l'app, puis *Generate Access Token* avec les autorisations `pages_show_list`, `pages_read_engagement` et `pages_read_user_content`.
-3. **Le rendre longue durée.** Dans l'[outil de débogage des jetons](https://developers.facebook.com/tools/debug/accesstoken/), coller le jeton puis *Extend Access Token*.
-4. **Récupérer le jeton de la page.** Dans l'explorateur, avec ce jeton longue durée, appeler `me/accounts`. La réponse contient, pour la page de la MAM, son `id` (→ `FACEBOOK_PAGE_ID`) et son `access_token` (→ `FACEBOOK_PAGE_ACCESS_TOKEN`). Ce jeton de page **n'expire pas** tant que le mot de passe et les accès à la page ne changent pas.
-5. **Ajouter les variables dans Vercel** (*Settings › Environment Variables*) : `FACEBOOK_PAGE_ID`, `FACEBOOK_PAGE_ACCESS_TOKEN` et `CRON_SECRET` (une longue chaîne aléatoire, voir `.env.example`). Redéployer.
-6. **Mettre à jour la base** : dans `/admin`, cliquer de nouveau sur **« Initialiser la base »** pour créer les tables `facebook_imports`, `posts` et `site_images`.
-7. Publier un post test avec `#site`, puis **« Récupérer maintenant »**.
-
-Si Facebook refuse un jour l'accès (mot de passe changé, accès retiré…), le bouton l'indique clairement : il suffit de refaire les étapes 2 à 5.
+- Le texte est publié **tel quel** : pas de prénom ni de nom de famille d'enfant.
+- Photos iPhone (HEIC) converties automatiquement. Vidéos : 3 minutes et 400 Mo maximum, converties en MP4 lisible partout.
+- ⚠️ Ne publier que des photos dont **les parents ont signé l'autorisation de diffusion sur internet**.
 
 ---
 
@@ -139,11 +101,10 @@ Si Facebook refuse un jour l'accès (mot de passe changé, accès retiré…), l
 ```bash
 npm run dev               # serveur de développement
 npm run build             # build de production
-npm test                  # 153 tests unitaires
+npm test                  # 134 tests unitaires
 npm run test:watch        # tests en continu
 npm run hash:password     # génère ADMIN_PASSWORD_HASH et SESSION_SECRET
 npm run legacy:manifest    # régénère data/legacy-photos.json depuis public/img
-npm run legacy:classify    # (re)classe les photos du dépôt avec Gemini
 ```
 
 ---
@@ -152,9 +113,9 @@ npm run legacy:classify    # (re)classe les photos du dépôt avec Gemini
 
 ```
 app/            pages et routes API (App Router)
-components/     ui/ · layout/ · home/ · gallery/ · admin/
-lib/            domaine : photos, catégories, auth, images, Gemini
-data/           catégories seed et manifeste des photos du dépôt
+components/     ui/ · layout/ · home/ · feed/ · gallery/ · admin/
+lib/            domaine : publications, photos, vidéos, auth, base de données
+data/           manifeste des photos du dépôt
 public/img/     photos et illustrations
 tests/          tests unitaires (Vitest)
 legacy/         ancien site statique, conservé pour référence

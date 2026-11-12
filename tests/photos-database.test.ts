@@ -14,13 +14,9 @@ vi.mock('@/lib/db', () => ({
 
 const {
   listPhotos,
-  listCategoriesWithCounts,
-  listAllCategories,
   createPhoto,
   findPhotoById,
-  movePhotoToCategory,
   removePhoto,
-  ensureCategory,
   importLegacyPhotos,
 } = await import('@/lib/photos')
 const { LEGACY_PHOTOS } = await import('@/lib/legacy-photos')
@@ -65,7 +61,17 @@ describe('listPhotos', () => {
       confidence: 0.91,
       source: 'upload',
       createdAt: '2026-03-04T10:15:00.000Z',
+      mediaType: 'image',
+      posterUrl: null,
     })
+  })
+
+  test('maps a video with its poster frame', async () => {
+    withCount(1, [{ ...PHOTO_ROW, media_type: 'video', poster_url: 'https://blob.example/p.webp' }])
+
+    const [video] = await listPhotos()
+
+    expect(video).toMatchObject({ mediaType: 'video', posterUrl: 'https://blob.example/p.webp' })
   })
 
   test('serves the committed photos while the database is still empty', async () => {
@@ -111,76 +117,6 @@ describe('listPhotos', () => {
   })
 })
 
-describe('listCategoriesWithCounts', () => {
-  test('maps aggregate rows, including the cover image', async () => {
-    withCount(1, [
-      {
-        slug: 'musique',
-        label: 'Musique',
-        emoji: '🎵',
-        description: 'Éveil musical.',
-        sort_order: '20',
-        photo_count: '6',
-        cover_url: 'https://blob.example/a.webp',
-      },
-    ])
-
-    const [category] = await listCategoriesWithCounts()
-
-    expect(category).toEqual({
-      slug: 'musique',
-      label: 'Musique',
-      emoji: '🎵',
-      description: 'Éveil musical.',
-      sortOrder: 20,
-      photoCount: 6,
-      coverUrl: 'https://blob.example/a.webp',
-    })
-  })
-
-  test('falls back to the manifest when the database errors', async () => {
-    query.mockRejectedValue(new Error('timeout'))
-
-    await expect(listCategoriesWithCounts()).resolves.not.toHaveLength(0)
-  })
-})
-
-describe('listAllCategories', () => {
-  test('returns the stored categories, Gemini-created ones included', async () => {
-    query.mockResolvedValueOnce([
-      {
-        slug: 'decouverte-nature',
-        label: 'Découverte nature',
-        emoji: '🐌',
-        description: 'Observation du vivant.',
-        sort_order: '500',
-      },
-    ])
-
-    await expect(listAllCategories()).resolves.toEqual([
-      {
-        slug: 'decouverte-nature',
-        label: 'Découverte nature',
-        emoji: '🐌',
-        description: 'Observation du vivant.',
-        sortOrder: 500,
-      },
-    ])
-  })
-
-  test('falls back to the seed taxonomy when the table is empty', async () => {
-    query.mockResolvedValueOnce([])
-
-    await expect(listAllCategories()).resolves.not.toHaveLength(0)
-  })
-
-  test('falls back to the seed taxonomy when the query fails', async () => {
-    query.mockRejectedValueOnce(new Error('relation does not exist'))
-
-    await expect(listAllCategories()).resolves.not.toHaveLength(0)
-  })
-})
-
 describe('single-photo operations', () => {
   test('createPhoto stores the photo and returns the mapped row', async () => {
     query.mockResolvedValueOnce([PHOTO_ROW])
@@ -223,19 +159,7 @@ describe('single-photo operations', () => {
     await expect(findPhotoById('inconnu')).resolves.toBeNull()
   })
 
-  test('movePhotoToCategory returns the updated photo', async () => {
-    query.mockResolvedValueOnce([{ ...PHOTO_ROW, category_slug: 'lecture' }])
 
-    await expect(movePhotoToCategory('abc123', 'lecture')).resolves.toMatchObject({
-      categorySlug: 'lecture',
-    })
-  })
-
-  test('movePhotoToCategory returns null for an unknown photo', async () => {
-    query.mockResolvedValueOnce([])
-
-    await expect(movePhotoToCategory('inconnu', 'lecture')).resolves.toBeNull()
-  })
 
   test('removePhoto reports whether a row was actually removed', async () => {
     query.mockResolvedValueOnce([{ id: 'abc123' }])
@@ -243,22 +167,6 @@ describe('single-photo operations', () => {
 
     query.mockResolvedValueOnce([])
     await expect(removePhoto('inconnu')).resolves.toBe(false)
-  })
-})
-
-describe('ensureCategory', () => {
-  test('inserts the proposed category and returns its slug', async () => {
-    query.mockResolvedValueOnce([])
-
-    const slug = await ensureCategory({
-      slug: 'decouverte-nature',
-      label: 'Découverte nature',
-      emoji: '🐌',
-      description: 'Observation du vivant.',
-    })
-
-    expect(slug).toBe('decouverte-nature')
-    expect(query.mock.calls[0]?.[0]).toContain('on conflict (slug) do nothing')
   })
 })
 

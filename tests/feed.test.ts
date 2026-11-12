@@ -12,7 +12,7 @@ vi.mock('@/lib/db', () => ({
   requireSql: () => ({ query }),
 }))
 
-const { FEED_PAGE_SIZE, listFeed } = await import('@/lib/feed')
+const { FEED_PAGE_SIZE, MEMORIES_ID, listFeed } = await import('@/lib/feed')
 const { LEGACY_PHOTOS } = await import('@/lib/legacy-photos')
 
 const PHOTO = {
@@ -20,12 +20,14 @@ const PHOTO = {
   url: 'https://blob.example/p1.webp',
   width: 1600,
   height: 1200,
-  alt: 'Des enfants peignent',
-  caption: 'Atelier peinture',
-  category_slug: 'peinture',
-  confidence: 0.9,
-  source: 'facebook',
+  alt: 'Atelier peinture',
+  caption: null,
+  category_slug: 'le-quotidien',
+  confidence: null,
+  source: 'upload',
   created_at: '2026-11-12T08:30:00+00:00',
+  media_type: 'image',
+  poster_url: null,
 }
 
 const POST_ROW = {
@@ -33,11 +35,8 @@ const POST_ROW = {
   created_at: '2026-11-12T08:30:00.000Z',
   body: 'Atelier peinture ce matin 🎨',
   has_post: true,
-  category_slug: 'peinture',
   photos: [PHOTO],
 }
-
-const legacyCategories = new Set(LEGACY_PHOTOS.map((photo) => photo.categorySlug))
 
 beforeEach(() => {
   isConfigured = true
@@ -46,7 +45,7 @@ beforeEach(() => {
 })
 
 describe('listFeed with a database', () => {
-  test('maps rows into publications with their photos', async () => {
+  test('maps rows into dated publications with their photos', async () => {
     query.mockResolvedValueOnce([{ total: 3 }]).mockResolvedValueOnce([POST_ROW])
 
     const page = await listFeed()
@@ -57,17 +56,14 @@ describe('listFeed with a database', () => {
       kind: 'post',
       createdAt: '2026-11-12T08:30:00.000Z',
       body: 'Atelier peinture ce matin 🎨',
-      categorySlug: 'peinture',
-      photos: [
-        expect.objectContaining({ id: 'p1', source: 'facebook', categorySlug: 'peinture' }),
-      ],
+      photos: [expect.objectContaining({ id: 'p1', mediaType: 'image' })],
     })
   })
 
-  test('labels single uploads and repository groups by kind', async () => {
+  test('labels single photos and the old-site photos by kind', async () => {
     query.mockResolvedValueOnce([{ total: 3 }]).mockResolvedValueOnce([
       { ...POST_ROW, item_id: 'abc', has_post: false, body: null },
-      { ...POST_ROW, item_id: 'legacy:peinture', has_post: false, body: null },
+      { ...POST_ROW, item_id: MEMORIES_ID, has_post: false, body: null },
     ])
 
     const page = await listFeed()
@@ -79,25 +75,25 @@ describe('listFeed with a database', () => {
     const rows = Array.from({ length: 3 }, (_, index) => ({ ...POST_ROW, item_id: `post-${index}` }))
     query.mockResolvedValueOnce([{ total: 9 }]).mockResolvedValueOnce(rows)
 
-    const page = await listFeed({ categorySlug: 'peinture', limit: 2, offset: 4 })
+    const page = await listFeed({ limit: 2, offset: 4 })
 
-    expect(query.mock.calls[1]?.[1]).toEqual(['peinture', 3, 4])
+    expect(query.mock.calls[1]?.[1]).toEqual([3, 4])
     expect(page.items).toHaveLength(2)
     expect(page.hasMore).toBe(true)
   })
 
-  test('falls back to the repository photos when the database is still empty', async () => {
+  test('shows the repository photos while the database is still empty', async () => {
     query.mockResolvedValueOnce([{ total: 0 }])
 
-    const page = await listFeed({ limit: 24 })
+    const page = await listFeed()
 
-    expect(page.items.every((item) => item.kind === 'memories')).toBe(true)
-    expect(page.items).toHaveLength(Math.min(24, legacyCategories.size))
+    expect(page.items).toHaveLength(1)
+    expect(page.items[0]?.kind).toBe('memories')
   })
 
   test('rebuilds the feed from stored photos when the feed query fails, so deleted photos stay gone', async () => {
-    const legacyKept = { ...PHOTO, id: 'kept', source: 'legacy', category_slug: 'musique' }
-    const upload = { ...PHOTO, id: 'up', source: 'upload', created_at: '2026-11-13T09:00:00+00:00' }
+    const legacyKept = { ...PHOTO, id: 'kept', source: 'legacy' }
+    const upload = { ...PHOTO, id: 'up', created_at: '2026-11-13T09:00:00+00:00' }
     query
       .mockResolvedValueOnce([{ total: 2 }]) // feed: is the database empty?
       .mockRejectedValueOnce(new Error('relation "posts" does not exist'))
@@ -106,18 +102,8 @@ describe('listFeed with a database', () => {
 
     const page = await listFeed()
 
-    const photoIds = page.items.flatMap((item) => item.photos.map((photo) => photo.id))
-    expect(photoIds).toEqual(['up', 'kept'])
     expect(page.items.map((item) => item.kind)).toEqual(['photo', 'memories'])
-  })
-
-  test('falls back to the repository photos when the database fails', async () => {
-    query.mockRejectedValueOnce(new Error('ECONNREFUSED'))
-
-    const page = await listFeed()
-
-    expect(page.items.length).toBeGreaterThan(0)
-    expect(page.items[0]?.kind).toBe('memories')
+    expect(page.items.flatMap((item) => item.photos.map((photo) => photo.id))).toEqual(['up', 'kept'])
   })
 })
 
@@ -126,37 +112,24 @@ describe('listFeed without a database', () => {
     isConfigured = false
   })
 
-  test('gathers the repository photos per activity, every photo kept once', async () => {
-    const page = await listFeed({ limit: 24 })
+  test('gathers every repository photo into one memories publication, oldest first', async () => {
+    const page = await listFeed()
 
-    const photoIds = page.items.flatMap((item) => item.photos.map((photo) => photo.id))
-    expect(new Set(photoIds).size).toBe(LEGACY_PHOTOS.length)
-    expect(page.items.every((item) => item.id === `legacy:${item.categorySlug}`)).toBe(true)
+    expect(page.items).toHaveLength(1)
+    const [memories] = page.items
+    expect(memories?.id).toBe(MEMORIES_ID)
+    expect(memories?.photos).toHaveLength(LEGACY_PHOTOS.length)
+    const dates = memories?.photos.map((photo) => photo.createdAt) ?? []
+    expect(dates).toEqual([...dates].sort())
   })
 
-  test('orders groups newest first and photos oldest first', async () => {
-    const { items } = await listFeed({ limit: 24 })
+  test('pages past the end without inventing items', async () => {
+    const page = await listFeed({ offset: 5 })
 
-    const dates = items.map((item) => item.createdAt)
-    expect(dates).toEqual([...dates].sort().reverse())
-    for (const item of items) {
-      const photoDates = item.photos.map((photo) => photo.createdAt)
-      expect(photoDates).toEqual([...photoDates].sort())
-    }
+    expect(page).toEqual({ items: [], hasMore: false })
   })
 
-  test('filters by activity and pages through the result', async () => {
-    const [slug] = legacyCategories
-
-    const filtered = await listFeed({ categorySlug: slug })
-    const firstPage = await listFeed({ limit: 1 })
-
-    expect(filtered.items.map((item) => item.categorySlug)).toEqual([slug])
-    expect(firstPage.items).toHaveLength(1)
-    expect(firstPage.hasMore).toBe(legacyCategories.size > 1)
-  })
-
-  test('uses the default page size for a missing or invalid limit', async () => {
+  test('uses the default page size for an invalid limit', async () => {
     const page = await listFeed({ limit: Number.NaN })
 
     expect(page.items.length).toBeLessThanOrEqual(FEED_PAGE_SIZE)

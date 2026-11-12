@@ -34,12 +34,6 @@ describe('env readers', () => {
     expect(env.databaseUrl).toBe('postgres://exemple')
   })
 
-  test('accept either name for the Gemini key', () => {
-    vi.stubEnv('GEMINI_API_KEY', '')
-    vi.stubEnv('GOOGLE_GENERATIVE_AI_API_KEY', 'cle')
-
-    expect(env.geminiApiKey).toBe('cle')
-  })
 
   test('use the production domain when no site URL is given', () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', '')
@@ -56,8 +50,6 @@ describe('missingAdminConfig', () => {
       'DATABASE_URL',
       'POSTGRES_URL',
       'BLOB_READ_WRITE_TOKEN',
-      'GEMINI_API_KEY',
-      'GOOGLE_GENERATIVE_AI_API_KEY',
     ]) {
       vi.stubEnv(name, '')
     }
@@ -67,7 +59,6 @@ describe('missingAdminConfig', () => {
       'SESSION_SECRET',
       'DATABASE_URL',
       'BLOB_READ_WRITE_TOKEN',
-      'GEMINI_API_KEY',
     ])
     expect(isAdminConfigured()).toBe(false)
   })
@@ -77,7 +68,6 @@ describe('missingAdminConfig', () => {
     vi.stubEnv('SESSION_SECRET', 'secret')
     vi.stubEnv('DATABASE_URL', 'postgres://exemple')
     vi.stubEnv('BLOB_READ_WRITE_TOKEN', 'jeton')
-    vi.stubEnv('GEMINI_API_KEY', 'cle')
 
     expect(missingAdminConfig()).toEqual([])
     expect(isAdminConfigured()).toBe(true)

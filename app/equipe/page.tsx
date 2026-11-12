@@ -85,6 +85,14 @@ function MemberCard({ member }: { readonly member: TeamMember }) {
         {member.role}
       </p>
       <p className="mt-1 text-sm text-ink-faint">{member.since}</p>
+      {member.phone !== null && (
+        <a
+          href={`tel:${member.phone.href}`}
+          className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-cream px-4 py-1.5 text-sm font-semibold text-ink ring-1 ring-clay/60 transition-colors hover:bg-shell hover:ring-terracotta/40"
+        >
+          <span aria-hidden>📞</span> {member.phone.display}
+        </a>
+      )}
       <p className="mt-5 leading-relaxed text-ink-soft">{member.bio}</p>
     </article>
   )

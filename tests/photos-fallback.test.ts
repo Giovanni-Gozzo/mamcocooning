@@ -12,10 +12,8 @@ vi.mock('@/lib/db', () => ({
   },
 }))
 
-const { listPhotos, listCategoriesWithCounts, listAllCategories, createPhoto, removePhoto } =
-  await import('@/lib/photos')
+const { listPhotos, createPhoto, removePhoto } = await import('@/lib/photos')
 const { LEGACY_PHOTOS } = await import('@/lib/legacy-photos')
-const { DEFAULT_CATEGORIES } = await import('@/lib/taxonomy')
 
 describe('listPhotos without a database', () => {
   test('returns the committed photos', async () => {
@@ -65,39 +63,7 @@ describe('listPhotos without a database', () => {
   })
 })
 
-describe('listCategoriesWithCounts without a database', () => {
-  let categories: Awaited<ReturnType<typeof listCategoriesWithCounts>>
-
-  beforeEach(async () => {
-    categories = await listCategoriesWithCounts()
-  })
-
-  test('only lists categories that actually hold a photo', () => {
-    expect(categories.length).toBeGreaterThan(0)
-    for (const category of categories) expect(category.photoCount).toBeGreaterThan(0)
-  })
-
-  test('counts match the underlying photos', () => {
-    for (const category of categories) {
-      const expected = LEGACY_PHOTOS.filter((p) => p.categorySlug === category.slug).length
-      expect(category.photoCount).toBe(expected)
-    }
-  })
-
-  test('each listed category exposes a cover image', () => {
-    for (const category of categories) expect(category.coverUrl).toMatch(/^\/img\//)
-  })
-
-  test('is ordered by the taxonomy sort order', () => {
-    const orders = categories.map((category) => category.sortOrder)
-    expect([...orders].sort((a, b) => a - b)).toEqual(orders)
-  })
-})
-
 describe('write operations without a database', () => {
-  test('listAllCategories falls back to the seed taxonomy', async () => {
-    await expect(listAllCategories()).resolves.toEqual(DEFAULT_CATEGORIES)
-  })
 
   test('createPhoto fails loudly instead of silently dropping the upload', async () => {
     await expect(

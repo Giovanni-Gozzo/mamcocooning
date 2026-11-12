@@ -5,7 +5,6 @@ import { LatestNews } from '@/components/home/LatestNews'
 import { Stats } from '@/components/home/Stats'
 import { Values } from '@/components/home/Values'
 import { listFeed } from '@/lib/feed'
-import { listCategoriesWithCounts } from '@/lib/photos'
 import { applyToHouseTour, getSiteImageOverrides } from '@/lib/site-images'
 
 const HOME_NEWS_COUNT = 3
@@ -13,8 +12,7 @@ const HOME_NEWS_COUNT = 3
 export const revalidate = 300
 
 export default async function HomePage() {
-  const [categories, news, overrides] = await Promise.all([
-    listCategoriesWithCounts(),
+  const [news, overrides] = await Promise.all([
     listFeed({ limit: HOME_NEWS_COUNT }),
     getSiteImageOverrides(),
   ])
@@ -26,7 +24,7 @@ export default async function HomePage() {
       <Stats />
       <Values />
       <HouseTour stops={stops} />
-      <LatestNews items={news.items} categories={categories} />
+      <LatestNews items={news.items} />
       <ClosingCta />
     </>
   )

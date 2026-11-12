@@ -5,48 +5,24 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Lightbox } from '@/components/gallery/Lightbox'
-import type { Category, Photo } from '@/lib/types'
+import { PlayBadge } from '@/components/ui/PlayBadge'
+import { thumbnailUrl } from '@/lib/media'
+import type { Photo } from '@/lib/types'
 
-const LOW_CONFIDENCE_THRESHOLD = 0.6
 
 interface PhotoManagerProps {
   readonly photos: readonly Photo[]
-  readonly categories: readonly Category[]
   readonly isReady: boolean
 }
 
-/** Lets the owner correct Gemini's choice, or take a photo off the site. */
-export function PhotoManager({ photos, categories, isReady }: PhotoManagerProps) {
+/** Lets the owner view a photo whole, or take it off the site. */
+export function PhotoManager({ photos, isReady }: PhotoManagerProps) {
   const router = useRouter()
   const [busyId, setBusyId] = useState<string | null>(null)
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
-  async function moveToCategory(id: string, categorySlug: string) {
-    setBusyId(id)
-    setError(null)
-
-    try {
-      const response = await fetch(`/api/photos/${id}`, {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ categorySlug }),
-      })
-      const payload = await response.json()
-
-      if (!response.ok || payload.success !== true) {
-        setError(payload.error ?? 'Modification impossible.')
-        return
-      }
-
-      router.refresh()
-    } catch {
-      setError('Modification impossible. Vérifiez votre réseau.')
-    } finally {
-      setBusyId(null)
-    }
-  }
 
   async function confirmRemoval(id: string) {
     setBusyId(id)
@@ -108,37 +84,17 @@ export function PhotoManager({ photos, categories, isReady }: PhotoManagerProps)
                 className="relative block aspect-[4/3] w-full cursor-zoom-in bg-clay/30"
               >
                 <Image
-                  src={photo.url}
+                  src={thumbnailUrl(photo)}
                   alt={photo.alt}
                   fill
                   sizes="(max-width: 640px) 100vw, 33vw"
                   className="object-cover"
                 />
-                {photo.confidence !== null && photo.confidence < LOW_CONFIDENCE_THRESHOLD && (
-                  <span className="absolute top-3 left-3 rounded-full bg-honey px-3 py-1 text-[0.7rem] font-bold text-ink">
-                    À vérifier
-                  </span>
-                )}
+                {photo.mediaType === 'video' && <PlayBadge />}
               </button>
 
               <div className="p-4">
                 <p className="line-clamp-2 text-sm leading-snug text-ink-soft">{photo.alt}</p>
-
-                <label className="mt-4 block text-xs font-bold tracking-wider text-ink-faint uppercase">
-                  Catégorie
-                  <select
-                    value={photo.categorySlug}
-                    disabled={!isReady || busyId === photo.id}
-                    onChange={(event) => void moveToCategory(photo.id, event.target.value)}
-                    className="mt-1.5 w-full rounded-xl bg-cream px-3 py-2.5 text-sm font-semibold text-ink ring-1 ring-clay/60 outline-none focus:ring-2 focus:ring-terracotta disabled:opacity-50"
-                  >
-                    {categories.map((category) => (
-                      <option key={category.slug} value={category.slug}>
-                        {category.emoji} {category.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
 
                 {pendingRemoval === photo.id ? (
                   <div className="mt-3 flex gap-2">

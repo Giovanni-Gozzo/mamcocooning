@@ -1,5 +1,6 @@
 /** Consistent JSON envelope for every route handler. */
 import { NextResponse } from 'next/server'
+import { UserFacingError } from './errors'
 
 export interface ApiSuccess<T> {
   readonly success: true
@@ -23,6 +24,7 @@ export function fail(message: string, status: number): NextResponse<ApiFailure> 
 
 /** Turns an unknown thrown value into a message safe to show a visitor. */
 export function toPublicMessage(error: unknown, fallback: string): string {
+  if (error instanceof UserFacingError) return error.message
   if (error instanceof Error && error.message.startsWith('Base de données')) return error.message
   return fallback
 }

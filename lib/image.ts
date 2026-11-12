@@ -6,12 +6,10 @@
  * without metadata, rotated upright, and capped in size.
  */
 import sharp from 'sharp'
+import { UserFacingError } from './errors'
 
 const MAX_EDGE_PX = 2200
 const WEB_QUALITY = 82
-/** Smaller copy sent to Gemini: enough detail to classify, far fewer tokens. */
-const ANALYSIS_EDGE_PX = 768
-const ANALYSIS_QUALITY = 70
 
 export const MAX_UPLOAD_BYTES = 15 * 1024 * 1024
 export const ACCEPTED_MIME_TYPES = [
@@ -42,6 +40,12 @@ export async function prepareForStorage(input: ArrayBuffer): Promise<PreparedIma
     .resize({ width: MAX_EDGE_PX, height: MAX_EDGE_PX, fit: 'inside', withoutEnlargement: true })
     .webp({ quality: WEB_QUALITY })
     .toBuffer({ resolveWithObject: true })
+    .catch((error: unknown) => {
+      console.error('[image] fichier illisible', error)
+      throw new UserFacingError(
+        'Cette image n’a pas pu être lue. Essayez une photo JPEG ou PNG (sur iPhone : Partager › Enregistrer l’image).',
+      )
+    })
 
   return {
     data,
@@ -52,18 +56,3 @@ export async function prepareForStorage(input: ArrayBuffer): Promise<PreparedIma
   }
 }
 
-/** Small JPEG used only for classification, never stored. */
-export async function prepareForAnalysis(input: Buffer): Promise<string> {
-  const data = await sharp(input)
-    .rotate()
-    .resize({
-      width: ANALYSIS_EDGE_PX,
-      height: ANALYSIS_EDGE_PX,
-      fit: 'inside',
-      withoutEnlargement: true,
-    })
-    .jpeg({ quality: ANALYSIS_QUALITY })
-    .toBuffer()
-
-  return data.toString('base64')
-}

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Reveal } from '@/components/ui/Reveal'
 import { SectionTitle } from '@/components/ui/SectionTitle'
-import { SITE } from '@/lib/site'
+import { SITE, TEAM } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Contact et accès — Entraigues-sur-la-Sorgue (84320)',
@@ -22,13 +22,12 @@ const DETAILS = [
     lines: [SITE.hours.days, SITE.hours.time],
     href: null,
   },
-  {
-    icon: '📞',
-    title: 'Nous appeler',
-    lines: [SITE.phone, 'Réponse sous 24 h en semaine'],
-    href: `tel:${SITE.phoneHref}`,
-  },
 ] as const
+
+/** Every team member reachable by phone, each number clickable. */
+const PHONES = TEAM.flatMap((member) =>
+  member.phone === null ? [] : [{ name: member.name.split(' ')[0], ...member.phone }],
+)
 
 export default function ContactPage() {
   return (
@@ -42,6 +41,24 @@ export default function ContactPage() {
         />
 
         <div className="mt-14 grid gap-4 sm:grid-cols-3">
+          <Reveal delay={0.1} className="order-last">
+            <div className="block h-full rounded-[2rem] bg-sand/70 p-8 ring-1 ring-clay/40">
+              <span aria-hidden className="text-3xl">
+                📞
+              </span>
+              <h2 className="mt-4 text-xl">Nous appeler</h2>
+              {PHONES.map((phone) => (
+                <a
+                  key={phone.href}
+                  href={`tel:${phone.href}`}
+                  className="mt-1 block leading-relaxed text-ink-soft underline-offset-4 hover:text-ink hover:underline"
+                >
+                  {phone.name} : <span className="font-semibold text-ink">{phone.display}</span>
+                </a>
+              ))}
+              <p className="mt-1 leading-relaxed text-ink-soft">Réponse sous 24 h en semaine</p>
+            </div>
+          </Reveal>
           {DETAILS.map((detail, index) => {
             const content = (
               <>

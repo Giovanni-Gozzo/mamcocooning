@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { clientKey, fail, ok, toPublicMessage } from '@/lib/api'
+import { UserFacingError } from '@/lib/errors'
 
 describe('response envelope', () => {
   test('ok wraps the payload and leaves error null', async () => {
@@ -34,6 +35,12 @@ describe('toPublicMessage', () => {
     const error = new Error('Base de données non configurée.')
 
     expect(toPublicMessage(error, 'repli')).toBe('Base de données non configurée.')
+  })
+
+  test('passes through errors written for the admin', () => {
+    const error = new UserFacingError('Cette image n’a pas pu être lue.')
+
+    expect(toPublicMessage(error, 'repli')).toBe('Cette image n’a pas pu être lue.')
   })
 
   test('hides unexpected errors behind the fallback message', () => {

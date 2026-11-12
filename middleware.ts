@@ -12,10 +12,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { SESSION_COOKIE, isValidSessionToken } from '@/lib/session'
 
 /**
- * Reachable even in private mode, so the owner can always get back in. The
- * cron routes check their own secret and must not be rewritten to /bientot.
+ * Reachable even in private mode, so the owner can always get back in.
  */
-const ALWAYS_OPEN = ['/admin', '/api/auth', '/api/cron', '/bientot']
+const ALWAYS_OPEN = ['/admin', '/api/auth', '/bientot']
 
 function isPrivateMode(): boolean {
   return process.env.SITE_PRIVATE === 'true'
