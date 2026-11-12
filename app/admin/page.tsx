@@ -3,6 +3,7 @@ import { LoginForm } from '@/components/admin/LoginForm'
 import { LogoutButton } from '@/components/admin/LogoutButton'
 import { PhotoManager } from '@/components/admin/PhotoManager'
 import { SetupPanel } from '@/components/admin/SetupPanel'
+import { SiteImagesManager } from '@/components/admin/SiteImagesManager'
 import { UploadDropzone } from '@/components/admin/UploadDropzone'
 import { isAuthenticated } from '@/lib/auth'
 import { FacebookSyncPanel } from '@/components/admin/FacebookSyncPanel'
@@ -15,6 +16,7 @@ import {
   missingAdminConfig,
 } from '@/lib/env'
 import { listAllCategories, listCategoriesWithCounts, listPhotos } from '@/lib/photos'
+import { listSiteImages } from '@/lib/site-images'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,10 +36,11 @@ export default async function AdminPage() {
     )
   }
 
-  const [categories, categoriesWithCounts, photos] = await Promise.all([
+  const [categories, categoriesWithCounts, photos, siteImages] = await Promise.all([
     listAllCategories(),
     listCategoriesWithCounts(),
     listPhotos({ limit: 400 }),
+    listSiteImages(),
   ])
 
   const canUpload = isDatabaseConfigured() && isBlobConfigured()
@@ -79,6 +82,16 @@ export default async function AdminPage() {
           </p>
           <div className="mt-7">
             <PhotoManager photos={photos} categories={categories} isReady={canUpload} />
+          </div>
+        </section>
+
+        <section className="mt-16">
+          <h2 className="text-2xl">Photos de la maison et de l&rsquo;équipe</h2>
+          <p className="mt-2 leading-relaxed text-ink-soft">
+            Les photos fixes du site. Touchez une photo pour la voir en entier, ou remplacez-la.
+          </p>
+          <div className="mt-7">
+            <SiteImagesManager images={siteImages} isReady={canUpload} />
           </div>
         </section>
 

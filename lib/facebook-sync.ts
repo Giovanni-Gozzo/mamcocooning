@@ -1,11 +1,13 @@
 /**
- * Pulls the photos of #site-tagged Facebook posts into the gallery.
+ * Pulls #site-tagged Facebook posts into the news feed: one publication per
+ * post, with its cleaned text and its photos.
  *
  * Each picture goes through the same pipeline as a manual upload (metadata
  * stripped, sorted and described by Gemini). A ledger table remembers every
  * image ever imported, so the sync is safe to run as often as wanted and never
  * resurrects a photo Sigrid has taken down.
  */
+import { nanoid } from 'nanoid'
 import { requireSql } from './db'
 import { env, isBlobConfigured, isDatabaseConfigured } from './env'
 import {
@@ -18,6 +20,9 @@ import {
   type FacebookImage,
 } from './facebook'
 import { ingestImage } from './ingest'
+import { cleanPostText } from './post-text'
+
+const POST_ID_LENGTH = 12
 
 /** Keeps one run well inside the function time limit (Gemini takes a few seconds per photo). */
 export const MAX_IMPORTS_PER_RUN = 8
@@ -100,14 +105,64 @@ async function releaseClaim(externalId: string): Promise<void> {
   )
 }
 
-async function importOne(image: FacebookImage, config: FacebookConfig): Promise<boolean> {
+/** Post ids already resolved during this run, so each text is cleaned once. */
+type PostCache = Map<string, Promise<string>>
+
+async function findPostId(externalId: string): Promise<string | null> {
+  const rows = (await requireSql().query('select id from posts where external_id = $1', [
+    externalId,
+  ])) as { id: string }[]
+  return rows[0]?.id ?? null
+}
+
+/** The feed publication for a Facebook post, created with its cleaned text on first sight. */
+async function createOrFindPost(image: FacebookImage): Promise<string> {
+  const externalId = `fbpost:${image.postId}`
+  const existing = await findPostId(externalId)
+  if (existing !== null) return existing
+
+  const body = await cleanPostText(image.postMessage)
+  const rows = (await requireSql().query(
+    `insert into posts (id, external_id, body, source, created_at)
+     values ($1, $2, $3, 'facebook', coalesce($4::timestamptz, now()))
+     on conflict (external_id) do nothing
+     returning id`,
+    [nanoid(POST_ID_LENGTH), externalId, body, image.createdAt ?? null],
+  )) as { id: string }[]
+
+  // Another run may have created it in the meantime.
+  const created = rows[0]?.id ?? (await findPostId(externalId))
+  if (created === null) throw new Error(`Publication ${externalId} introuvable après création.`)
+  return created
+}
+
+function ensurePost(image: FacebookImage, cache: PostCache): Promise<string> {
+  const cached = cache.get(image.postId)
+  if (cached !== undefined) return cached
+  const pending = createOrFindPost(image)
+  cache.set(image.postId, pending)
+  // A failure must not poison the other photos of the same post.
+  pending.catch(() => cache.delete(image.postId))
+  return pending
+}
+
+async function importOne(
+  image: FacebookImage,
+  config: FacebookConfig,
+  posts: PostCache,
+): Promise<boolean> {
   if (!(await claim(image.externalId))) return false
 
   let photoId: string
   try {
+    const postId = await ensurePost(image, posts)
     const url = await resolveFullSizeUrl(image, config)
     const data = await downloadImage(url)
-    const { photo } = await ingestImage(data, { source: 'facebook', createdAt: image.createdAt })
+    const { photo } = await ingestImage(data, {
+      source: 'facebook',
+      createdAt: image.createdAt,
+      postId,
+    })
     photoId = photo.id
   } catch (error) {
     await releaseClaim(image.externalId)
@@ -137,19 +192,20 @@ function isMissingTable(error: unknown): boolean {
 
 export async function syncFacebookPhotos(): Promise<SyncReport> {
   const config = requireConfig()
-  const posts = await fetchRecentPosts(config)
-  const tagged = extractTaggedImages(posts, env.facebookHashtag)
+  const feed = await fetchRecentPosts(config)
+  const tagged = extractTaggedImages(feed, env.facebookHashtag)
 
   const known = await findSettledIds(tagged.map((image) => image.externalId))
   // Oldest first, so the gallery fills in the order things happened.
   const fresh = [...tagged.filter((image) => !known.has(image.externalId))].reverse()
   const batch = fresh.slice(0, MAX_IMPORTS_PER_RUN)
 
+  const posts: PostCache = new Map()
   let imported = 0
   let failed = 0
   for (const image of batch) {
     try {
-      if (await importOne(image, config)) imported += 1
+      if (await importOne(image, config, posts)) imported += 1
     } catch (error) {
       failed += 1
       console.error(`[facebook] import de ${image.externalId} impossible`, error)

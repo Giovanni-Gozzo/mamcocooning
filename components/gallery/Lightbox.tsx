@@ -5,8 +5,15 @@ import { useCallback, useEffect } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import type { Photo } from '@/lib/types'
 
+/** What the viewer needs: works for gallery photos and the fixed site photos alike. */
+export type LightboxPhoto = Pick<Photo, 'id' | 'url' | 'alt' | 'caption'> &
+  Partial<Pick<Photo, 'width' | 'height'>>
+
+/** Used when the size is unknown; the image is still shown whole (object-contain). */
+const FALLBACK_RATIO = '4 / 3'
+
 interface LightboxProps {
-  readonly photos: readonly Photo[]
+  readonly photos: readonly LightboxPhoto[]
   readonly activeIndex: number | null
   readonly onClose: () => void
   readonly onNavigate: (index: number) => void
@@ -66,7 +73,12 @@ export function Lightbox({ photos, activeIndex, onClose, onNavigate }: LightboxP
           >
             <div
               className="relative w-full overflow-hidden rounded-[1.75rem] bg-ink-soft/20"
-              style={{ aspectRatio: `${photo.width} / ${photo.height}` }}
+              style={{
+                aspectRatio:
+                  photo.width !== undefined && photo.height !== undefined
+                    ? `${photo.width} / ${photo.height}`
+                    : FALLBACK_RATIO,
+              }}
             >
               <Image
                 src={photo.url}

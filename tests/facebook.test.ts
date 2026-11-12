@@ -81,6 +81,7 @@ describe('extractTaggedImages', () => {
       {
         externalId: 'fb:901',
         postId: 'page_1',
+        postMessage: 'Peinture propre ce matin ! #site',
         photoId: '901',
         url: CDN,
         createdAt: '2026-11-12T08:30:00.000Z',
@@ -186,6 +187,7 @@ describe('resolveFullSizeUrl', () => {
   const preview = {
     externalId: 'fb:901',
     postId: 'page_1',
+    postMessage: '#site',
     photoId: '901',
     url: CDN,
     createdAt: undefined,

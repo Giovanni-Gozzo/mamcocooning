@@ -23,7 +23,7 @@ export function CategoryFilter({
   return (
     <div
       role="group"
-      aria-label="Filtrer les photos par activité"
+      aria-label="Filtrer les actualités par activité"
       className="no-scrollbar -mx-6 flex gap-2 overflow-x-auto px-6 pb-2 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0"
     >
       <Pill

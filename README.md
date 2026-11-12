@@ -9,7 +9,7 @@ Next.js 16 (App Router) · Tailwind CSS 4 · Motion · Vercel Blob · Neon Postg
 ## Ce que fait le site
 
 - **Site public** : accueil animé, visite de la maison pièce par pièce, journée type, équipe, contact.
-- **Galerie dynamique** : les catégories d'activités n'existent que si au moins une photo s'y trouve. Elles apparaissent et disparaissent toutes seules.
+- **Actualités** : un fil de publications (date, texte, photos, activité), alimenté par Facebook (`#site`) et par les envois de `/admin`, filtrable par activité. Les catégories n'existent que si au moins une photo s'y trouve.
 - **Espace privé** (`/admin`) : Sigrid s'y connecte avec un mot de passe unique, dépose ses photos, et **Gemini les range automatiquement** dans la bonne catégorie en rédigeant leur description.
 - **Repli intégré** : sans base de données configurée, le site sert les 64 photos versionnées dans le dépôt. Il n'est jamais vide, jamais cassé.
 
@@ -23,7 +23,7 @@ cp .env.example .env.local   # puis remplir les valeurs voulues
 npm run dev
 ```
 
-Le site tourne sans aucune variable d'environnement : la galerie utilise alors `data/legacy-photos.json`.
+Le site tourne sans aucune variable d'environnement : les actualités affichent alors les photos de `data/legacy-photos.json`.
 
 ---
 
@@ -98,6 +98,7 @@ Dans **Settings › Domains**, ajouter `mamcocooning.fr` et suivre les instructi
 2. Glisser ses photos, ou appuyer sur **Choisir des photos** (ça marche depuis un téléphone).
 3. Chaque photo est nettoyée, analysée, rangée et publiée. Le site se met à jour seul.
 4. Si une photo est mal rangée, la liste du dessous permet de changer sa catégorie ou de la retirer.
+5. Toucher une photo l'affiche en entier. Les photos de la maison (visite pièce par pièce) et les portraits de l'équipe se remplacent dans **« Photos de la maison et de l'équipe »**, avec un bouton pour revenir à l'originale.
 
 Chaque photo est ré-encodée en WebP, redimensionnée, et **toutes ses métadonnées EXIF sont supprimées** — y compris les coordonnées GPS que les téléphones enregistrent, qui correspondent à l'adresse de la maison.
 
@@ -105,10 +106,9 @@ Chaque photo est ré-encodée en WebP, redimensionnée, et **toutes ses métadon
 
 ## Photos depuis Facebook
 
-Sigrid publie sur la page Facebook de la MAM comme d'habitude. **Si le post contient `#site`**, ses photos arrivent sur le site, passent par le même traitement qu'un envoi depuis `/admin` (EXIF supprimés, classement et description par Gemini) et apparaissent dans la galerie à la date du post.
+Sigrid publie sur la page Facebook de la MAM comme d'habitude. **Si le post contient `#site`**, ses photos arrivent sur le site, passent par le même traitement qu'un envoi depuis `/admin` (EXIF supprimés, classement et description par Gemini) et forment **une publication des Actualités** à la date du post, avec le texte du post **nettoyé par Gemini** (hashtags, prénoms d'enfants et infos personnelles retirés ; sans clé Gemini, aucun texte n'est publié).
 
 - La récupération tourne **chaque jour à 18 h UTC** (`vercel.json`). Le bouton **« Récupérer maintenant »** dans `/admin` la lance tout de suite.
-- **Le texte du post n'est jamais repris** : il peut contenir des prénoms. Gemini rédige la description, avec ses règles de confidentialité.
 - Une photo retirée du site depuis `/admin` **ne revient jamais**, même si le post reste sur Facebook (registre `facebook_imports`).
 - Au plus 8 photos par passage, pour rester dans le temps d'exécution. Le reste arrive au passage suivant.
 - Seuls les **25 derniers posts** de la page sont examinés à chaque passage : un vieux post tagué après coup ne sera pas récupéré.
@@ -127,7 +127,7 @@ Il faut que le compte Facebook utilisé soit **administrateur de la page** de la
 3. **Le rendre longue durée.** Dans l'[outil de débogage des jetons](https://developers.facebook.com/tools/debug/accesstoken/), coller le jeton puis *Extend Access Token*.
 4. **Récupérer le jeton de la page.** Dans l'explorateur, avec ce jeton longue durée, appeler `me/accounts`. La réponse contient, pour la page de la MAM, son `id` (→ `FACEBOOK_PAGE_ID`) et son `access_token` (→ `FACEBOOK_PAGE_ACCESS_TOKEN`). Ce jeton de page **n'expire pas** tant que le mot de passe et les accès à la page ne changent pas.
 5. **Ajouter les variables dans Vercel** (*Settings › Environment Variables*) : `FACEBOOK_PAGE_ID`, `FACEBOOK_PAGE_ACCESS_TOKEN` et `CRON_SECRET` (une longue chaîne aléatoire, voir `.env.example`). Redéployer.
-6. **Mettre à jour la base** : dans `/admin`, cliquer de nouveau sur **« Initialiser la base »** pour créer la table `facebook_imports`.
+6. **Mettre à jour la base** : dans `/admin`, cliquer de nouveau sur **« Initialiser la base »** pour créer les tables `facebook_imports`, `posts` et `site_images`.
 7. Publier un post test avec `#site`, puis **« Récupérer maintenant »**.
 
 Si Facebook refuse un jour l'accès (mot de passe changé, accès retiré…), le bouton l'indique clairement : il suffit de refaire les étapes 2 à 5.

@@ -87,7 +87,7 @@ export default async function ProgrammesPage() {
             {categories.map((category, index) => (
               <Reveal key={category.slug} delay={Math.min(index, 4) * 0.04}>
                 <Link
-                  href={`/galerie?categorie=${category.slug}`}
+                  href={`/actualites?categorie=${category.slug}`}
                   className="group flex items-center gap-3 rounded-full bg-sand px-5 py-3.5 ring-1 ring-clay/50 transition-all duration-400 hover:-translate-y-1 hover:bg-shell hover:ring-terracotta/40"
                 >
                   <span
@@ -104,7 +104,7 @@ export default async function ProgrammesPage() {
           </div>
 
           <div className="mt-12 text-center">
-            <ButtonLink href="/galerie">Voir toutes les photos</ButtonLink>
+            <ButtonLink href="/actualites">Voir toutes les actualités</ButtonLink>
           </div>
         </div>
       )}

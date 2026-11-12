@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { FloatingJungle, type JungleSpec } from '@/components/ui/FloatingJungle'
 import { SectionTitle } from '@/components/ui/SectionTitle'
-import { HOUSE_TOUR } from '@/lib/site'
+import type { TourStop } from '@/lib/site'
 
 const SCENE_JUNGLE: readonly JungleSpec[] = [
   { name: 'monstera', className: 'left-[1%] bottom-[6%] hidden w-24 lg:block', color: 'text-jungle/20', tilt: -10 },
@@ -59,10 +59,14 @@ function wrappedOffset(index: number, activeIndex: number, total: number): numbe
   return (((index - activeIndex + half + total) % total) - half)
 }
 
-export function HouseTour() {
+interface HouseTourProps {
+  readonly stops: readonly TourStop[]
+}
+
+export function HouseTour({ stops }: HouseTourProps) {
   const [activeIndex, setActiveIndex] = useState(0)
   const prefersReducedMotion = useReducedMotion() ?? false
-  const total = HOUSE_TOUR.length
+  const total = stops.length
 
   const goTo = useCallback((index: number) => setActiveIndex(((index % total) + total) % total), [total])
 
@@ -83,7 +87,7 @@ export function HouseTour() {
     return () => document.removeEventListener('keydown', handleKey)
   }, [step])
 
-  const activeStop = HOUSE_TOUR[activeIndex]
+  const activeStop = stops[activeIndex]
 
   return (
     <section className="relative mt-28 overflow-hidden">
@@ -106,7 +110,7 @@ export function HouseTour() {
         className="relative mx-auto mt-14 h-[clamp(17rem,42vw,26rem)] w-full max-w-5xl rounded-3xl outline-offset-8"
         style={{ perspective: '1500px', transformStyle: 'preserve-3d' }}
       >
-        {HOUSE_TOUR.map((stop, index) => {
+        {stops.map((stop, index) => {
           const offset = wrappedOffset(index, activeIndex, total)
           if (Math.abs(offset) > VISIBLE_NEIGHBOURS) return null
 
@@ -183,7 +187,7 @@ export function HouseTour() {
           <StageButton direction="left" onClick={() => step(-1)} />
 
           <div className="flex flex-nowrap justify-center gap-1 sm:gap-1.5">
-            {HOUSE_TOUR.map((stop, index) => (
+            {stops.map((stop, index) => (
               <button
                 key={stop.image}
                 type="button"

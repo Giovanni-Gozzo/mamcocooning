@@ -2,12 +2,12 @@
  * One-click backend setup from the admin panel: create the tables, sync the
  * seed categories, and import the photos already committed to the repository.
  */
-import { revalidatePath } from 'next/cache'
 import { fail, ok, toPublicMessage } from '@/lib/api'
 import { isAuthenticated } from '@/lib/auth'
 import { isDatabaseConfigured, missingAdminConfig } from '@/lib/env'
 import { runMigration } from '@/lib/migrate'
 import { importLegacyPhotos } from '@/lib/photos'
+import { revalidatePublicPages } from '@/lib/revalidate'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -27,9 +27,7 @@ export async function POST() {
     const migration = await runMigration()
     const imported = await importLegacyPhotos()
 
-    revalidatePath('/')
-    revalidatePath('/galerie')
-    revalidatePath('/programmes')
+    revalidatePublicPages()
 
     return ok({ ...migration, importedPhotos: imported })
   } catch (error) {

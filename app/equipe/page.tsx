@@ -3,7 +3,8 @@ import Image from 'next/image'
 import { ButtonLink } from '@/components/ui/Button'
 import { Reveal } from '@/components/ui/Reveal'
 import { SectionTitle } from '@/components/ui/SectionTitle'
-import { SITE, TEAM, type TeamMember } from '@/lib/site'
+import { SITE, type TeamMember } from '@/lib/site'
+import { applyToTeam, getSiteImageOverrides } from '@/lib/site-images'
 
 export const metadata: Metadata = {
   title: 'Assistantes maternelles agréées à Entraigues-sur-la-Sorgue',
@@ -12,7 +13,11 @@ export const metadata: Metadata = {
   alternates: { canonical: '/equipe' },
 }
 
-export default function TeamPage() {
+export const revalidate = 300
+
+export default async function TeamPage() {
+  const team = applyToTeam(await getSiteImageOverrides())
+
   return (
     <div className="grain relative overflow-hidden px-6 pt-36 pb-10 sm:pt-44">
       <div
@@ -29,7 +34,7 @@ export default function TeamPage() {
         />
 
         <div className="mt-16 grid gap-10 sm:grid-cols-2 sm:gap-8">
-          {TEAM.map((member, index) => (
+          {team.map((member, index) => (
             <Reveal key={member.name} delay={index * 0.06}>
               <MemberCard member={member} />
             </Reveal>
