@@ -2,22 +2,15 @@
  * GET  — public listing, optionally scoped to one category.
  * POST — owner-only upload: strip metadata, ask Gemini to sort it, store it.
  */
-import { revalidatePath } from 'next/cache'
-import { put } from '@vercel/blob'
-import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { clientKey, fail, ok, toPublicMessage } from '@/lib/api'
 import { isAuthenticated } from '@/lib/auth'
-import { env, isBlobConfigured, isDatabaseConfigured } from '@/lib/env'
-import { classifyPhoto } from '@/lib/gemini'
-import {
-  MAX_UPLOAD_BYTES,
-  isAcceptedMimeType,
-  prepareForAnalysis,
-  prepareForStorage,
-} from '@/lib/image'
-import { createPhoto, ensureCategory, listAllCategories, listPhotos } from '@/lib/photos'
+import { isBlobConfigured, isDatabaseConfigured } from '@/lib/env'
+import { MAX_UPLOAD_BYTES, isAcceptedMimeType } from '@/lib/image'
+import { ingestImage } from '@/lib/ingest'
+import { listPhotos } from '@/lib/photos'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { revalidatePublicPages } from '@/lib/revalidate'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -72,40 +65,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const prepared = await prepareForStorage(await file.arrayBuffer())
-    const categories = await listAllCategories()
-    const analysisImage = await prepareForAnalysis(prepared.data)
-    const classification = await classifyPhoto(analysisImage, categories)
-
-    const categorySlug =
-      classification.isNewCategory && classification.newCategory !== null
-        ? await ensureCategory(classification.newCategory)
-        : classification.categorySlug
-
-    const id = nanoid(12)
-    const blob = await put(`photos/${categorySlug}/${id}.${prepared.extension}`, prepared.data, {
-      access: 'public',
-      contentType: prepared.mimeType,
-      token: env.blobToken ?? undefined,
-      addRandomSuffix: false,
-    })
-
-    const photo = await createPhoto({
-      id,
-      url: blob.url,
-      width: prepared.width,
-      height: prepared.height,
-      alt: classification.alt,
-      caption: classification.caption,
-      categorySlug,
-      confidence: classification.confidence,
-    })
-
-    revalidatePath('/')
-    revalidatePath('/galerie')
-    revalidatePath('/programmes')
-
-    return ok({ photo, createdCategory: classification.isNewCategory }, { status: 201 })
+    const result = await ingestImage(await file.arrayBuffer(), { source: 'upload' })
+    revalidatePublicPages()
+    return ok(result, { status: 201 })
   } catch (error) {
     console.error('[upload] échec', error)
     return fail(toPublicMessage(error, 'Envoi impossible. Réessayez dans un instant.'), 500)

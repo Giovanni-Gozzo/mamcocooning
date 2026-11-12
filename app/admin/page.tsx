@@ -5,10 +5,13 @@ import { PhotoManager } from '@/components/admin/PhotoManager'
 import { SetupPanel } from '@/components/admin/SetupPanel'
 import { UploadDropzone } from '@/components/admin/UploadDropzone'
 import { isAuthenticated } from '@/lib/auth'
+import { FacebookSyncPanel } from '@/components/admin/FacebookSyncPanel'
 import {
+  env,
   isAdminConfigured,
   isBlobConfigured,
   isDatabaseConfigured,
+  isFacebookConfigured,
   missingAdminConfig,
 } from '@/lib/env'
 import { listAllCategories, listCategoriesWithCounts, listPhotos } from '@/lib/photos'
@@ -78,6 +81,10 @@ export default async function AdminPage() {
             <PhotoManager photos={photos} categories={categories} isReady={canUpload} />
           </div>
         </section>
+
+        <div className="mt-16">
+          <FacebookSyncPanel isConfigured={isFacebookConfigured()} hashtag={env.facebookHashtag} />
+        </div>
 
         <div className="mt-16">
           <SetupPanel missing={missingAdminConfig()} isDatabaseReady={isDatabaseConfigured()} />

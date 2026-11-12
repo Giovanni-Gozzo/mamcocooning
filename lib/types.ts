@@ -1,6 +1,6 @@
 /** Shared domain types for the MAM Cocooning gallery. */
 
-export type PhotoSource = 'upload' | 'legacy'
+export type PhotoSource = 'upload' | 'legacy' | 'facebook'
 
 export interface Category {
   readonly slug: string

@@ -1,11 +1,11 @@
 /** Owner-only maintenance on a single photo: re-file it, or take it down. */
-import { revalidatePath } from 'next/cache'
 import { del } from '@vercel/blob'
 import { z } from 'zod'
 import { fail, ok, toPublicMessage } from '@/lib/api'
 import { isAuthenticated } from '@/lib/auth'
 import { env } from '@/lib/env'
 import { findPhotoById, listAllCategories, movePhotoToCategory, removePhoto } from '@/lib/photos'
+import { revalidatePublicPages } from '@/lib/revalidate'
 
 export const runtime = 'nodejs'
 
@@ -13,12 +13,6 @@ const MoveSchema = z.object({ categorySlug: z.string().trim().min(1).max(64) })
 
 interface RouteContext {
   params: Promise<{ id: string }>
-}
-
-function revalidatePublicPages(): void {
-  revalidatePath('/')
-  revalidatePath('/galerie')
-  revalidatePath('/programmes')
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
