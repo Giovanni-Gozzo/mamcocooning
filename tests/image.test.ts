@@ -9,7 +9,6 @@ import {
   ACCEPTED_MIME_TYPES,
   MAX_UPLOAD_BYTES,
   isAcceptedMimeType,
-  prepareForAnalysis,
   prepareForStorage,
 } from '@/lib/image'
 
@@ -98,19 +97,6 @@ describe('prepareForStorage', () => {
     await expect(prepareForStorage(notAnImage as ArrayBuffer)).rejects.toThrow(
       'Cette image n’a pas pu être lue',
     )
-  })
-})
-
-describe('prepareForAnalysis', () => {
-  test('returns base64 small enough to stay cheap to classify', async () => {
-    const source = await makeJpeg(3000, 2000)
-
-    const base64 = await prepareForAnalysis(source)
-    const metadata = await sharp(Buffer.from(base64, 'base64')).metadata()
-
-    expect(metadata.format).toBe('jpeg')
-    expect(metadata.width).toBeLessThanOrEqual(768)
-    expect(metadata.height).toBeLessThanOrEqual(768)
   })
 })
 

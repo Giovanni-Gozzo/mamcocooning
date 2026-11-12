@@ -3,15 +3,12 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { FeedCard } from './FeedCard'
-import { CategoryFilter } from '@/components/gallery/CategoryFilter'
 import { Lightbox } from '@/components/gallery/Lightbox'
 import { FEED_PAGE_SIZE } from '@/lib/feed-format'
-import type { CategoryWithCount, FeedItem, FeedPage } from '@/lib/types'
+import type { FeedItem, FeedPage } from '@/lib/types'
 
 interface FeedListProps {
   readonly initialPage: FeedPage
-  readonly categories: readonly CategoryWithCount[]
-  readonly initialCategory: string | null
 }
 
 interface OpenPhoto {
@@ -19,9 +16,8 @@ interface OpenPhoto {
   readonly index: number
 }
 
-async function fetchFeedPage(slug: string | null, offset: number): Promise<FeedPage> {
+async function fetchFeedPage(offset: number): Promise<FeedPage> {
   const params = new URLSearchParams({ limit: String(FEED_PAGE_SIZE), offset: String(offset) })
-  if (slug !== null) params.set('category', slug)
 
   const response = await fetch(`/api/feed?${params}`)
   const payload = await response.json()
@@ -31,30 +27,20 @@ async function fetchFeedPage(slug: string | null, offset: number): Promise<FeedP
   return payload.data as FeedPage
 }
 
-/** Keeps the address bar in sync, so a filtered feed can be shared or reloaded. */
-function syncUrl(slug: string | null): void {
-  const url = new URL(window.location.href)
-  if (slug === null) url.searchParams.delete('categorie')
-  else url.searchParams.set('categorie', slug)
-  window.history.replaceState(null, '', url)
-}
-
-export function FeedList({ initialPage, categories, initialCategory }: FeedListProps) {
+export function FeedList({ initialPage }: FeedListProps) {
   const [items, setItems] = useState<readonly FeedItem[]>(initialPage.items)
   const [hasMore, setHasMore] = useState(initialPage.hasMore)
-  const [activeSlug, setActiveSlug] = useState<string | null>(initialCategory)
   const [openPhoto, setOpenPhoto] = useState<OpenPhoto | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const totalPhotos = categories.reduce((total, category) => total + category.photoCount, 0)
   const openItem = items.find((item) => item.id === openPhoto?.itemId)
 
-  async function load(slug: string | null, offset: number) {
+  async function load(offset: number) {
     setIsLoading(true)
     setError(null)
     try {
-      const page = await fetchFeedPage(slug, offset)
+      const page = await fetchFeedPage(offset)
       setItems((current) => (offset === 0 ? page.items : [...current, ...page.items]))
       setHasMore(page.hasMore)
     } catch (caught) {
@@ -64,23 +50,9 @@ export function FeedList({ initialPage, categories, initialCategory }: FeedListP
     }
   }
 
-  function selectCategory(slug: string | null) {
-    if (slug === activeSlug) return
-    setActiveSlug(slug)
-    syncUrl(slug)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-    void load(slug, 0)
-  }
 
   return (
     <div>
-      <CategoryFilter
-        categories={categories}
-        activeSlug={activeSlug}
-        onChange={selectCategory}
-        totalCount={totalPhotos}
-      />
-
       {error !== null && (
         <p
           role="alert"
@@ -106,9 +78,7 @@ export function FeedList({ initialPage, categories, initialCategory }: FeedListP
             >
               <FeedCard
                 item={item}
-                category={categories.find((category) => category.slug === item.categorySlug)}
                 onOpenPhoto={(index) => setOpenPhoto({ itemId: item.id, index })}
-                onSelectCategory={selectCategory}
               />
             </motion.li>
           ))}
@@ -126,7 +96,7 @@ export function FeedList({ initialPage, categories, initialCategory }: FeedListP
           <button
             type="button"
             disabled={isLoading}
-            onClick={() => void load(activeSlug, items.length)}
+            onClick={() => void load(items.length)}
             className="rounded-full bg-ink px-7 py-3.5 font-semibold text-cream transition-transform hover:-translate-y-0.5 disabled:opacity-50"
           >
             {isLoading ? 'Chargement…' : 'Voir les nouvelles plus anciennes'}

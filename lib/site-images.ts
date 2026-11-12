@@ -6,7 +6,7 @@
  * over the default. Without a database the defaults are simply shown.
  */
 import { getSql, requireSql } from './db'
-import { HOUSE_TOUR, TEAM, type TeamMember, type TourStop } from './site'
+import { HERO_STOP_INDEXES, HOUSE_TOUR, TEAM, type TeamMember, type TourStop } from './site'
 import { toSlug } from './taxonomy'
 
 export type SiteImageGroup = 'maison' | 'equipe'
@@ -16,6 +16,8 @@ export interface SiteImageSlot {
   readonly label: string
   readonly group: SiteImageGroup
   readonly defaultUrl: string | null
+  /** Also shown in the collage at the very top of the homepage. */
+  readonly isInHero: boolean
 }
 
 export interface SiteImage extends SiteImageSlot {
@@ -29,17 +31,19 @@ const tourSlotId = (stop: TourStop): string => `maison-${toSlug(stop.title)}`
 const teamSlotId = (member: TeamMember): string => `equipe-${toSlug(member.name)}`
 
 export const SITE_IMAGE_SLOTS: readonly SiteImageSlot[] = [
-  ...HOUSE_TOUR.map((stop) => ({
+  ...HOUSE_TOUR.map((stop, index) => ({
     id: tourSlotId(stop),
     label: stop.title,
     group: 'maison' as const,
     defaultUrl: stop.image,
+    isInHero: (HERO_STOP_INDEXES as readonly number[]).includes(index),
   })),
   ...TEAM.map((member) => ({
     id: teamSlotId(member),
     label: `Portrait de ${member.name}`,
     group: 'equipe' as const,
     defaultUrl: member.photoUrl,
+    isInHero: false,
   })),
 ]
 

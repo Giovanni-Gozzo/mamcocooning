@@ -90,7 +90,7 @@ const localBusinessJsonLd = {
     '@type': 'OpeningHoursSpecification',
     dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
     opens: '07:30',
-    closes: '18:30',
+    closes: '17:30',
   },
 }
 

@@ -6,39 +6,35 @@ const put = vi.fn()
 const del = vi.fn()
 const ingestImage = vi.fn()
 const prepareVideoFromUrl = vi.fn()
-const classifyPhoto = vi.fn()
 const createPhoto = vi.fn()
-const ensureCategory = vi.fn()
 
 vi.mock('@/lib/db', () => ({ requireSql: () => ({ query }), getSql: () => ({ query }) }))
 vi.mock('@vercel/blob', () => ({ put, del }))
-vi.mock('@/lib/ingest', () => ({ ingestImage }))
-vi.mock('@/lib/video', () => ({ prepareVideoFromUrl }))
-vi.mock('@/lib/gemini', () => ({ classifyPhoto }))
-vi.mock('@/lib/image', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/image')>()),
-  prepareForAnalysis: async () => 'base64',
+vi.mock('@/lib/ingest', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/ingest')>()),
+  ingestImage,
 }))
-vi.mock('@/lib/photos', () => ({ createPhoto, ensureCategory, listAllCategories: async () => [] }))
+vi.mock('@/lib/video', () => ({ prepareVideoFromUrl }))
+vi.mock('@/lib/photos', () => ({ createPhoto }))
 
 const { addMedia, createDraft, isIncomingUpload, publishDraft, MAX_MEDIA_PER_POST } = await import(
   '@/lib/publications'
 )
 
 const INCOMING = 'https://abc.public.blob.vercel-storage.com/incoming/1-0-xyz.jpg'
-const DRAFT_ROW = { id: 'post-1', created_at: '2026-11-12T10:00:00.000Z' }
+const DRAFT_ROW = { id: 'post-1', created_at: '2026-11-12T10:00:00.000Z', body: 'Pique-nique au jardin ! Super journée.' }
 
 /** Draft lookup, then media count, like the real queries. */
 function stubDraft(mediaCount = 0) {
   query.mockImplementation(async (text: string) => {
-    if (text.startsWith('select id, created_at from posts')) return [DRAFT_ROW]
+    if (text.startsWith('select id, created_at, body from posts')) return [DRAFT_ROW]
     if (text.startsWith('select count(*)')) return [{ total: mediaCount }]
     return []
   })
 }
 
 beforeEach(() => {
-  for (const mock of [query, put, del, ingestImage, prepareVideoFromUrl, classifyPhoto, createPhoto, ensureCategory]) {
+  for (const mock of [query, put, del, ingestImage, prepareVideoFromUrl, createPhoto]) {
     mock.mockReset()
   }
   del.mockResolvedValue(undefined)
@@ -64,7 +60,11 @@ describe('createDraft', () => {
 
     const draft = await createDraft('  Atelier pâte à sel 🎨  ')
 
-    expect(draft).toEqual({ id: 'post-1', createdAt: '2026-11-12T10:00:00.000Z' })
+    expect(draft).toEqual({
+      id: 'post-1',
+      createdAt: '2026-11-12T10:00:00.000Z',
+      body: 'Pique-nique au jardin ! Super journée.',
+    })
     expect(query.mock.calls[0]?.[1]?.[1]).toBe('Atelier pâte à sel 🎨')
   })
 
@@ -85,12 +85,12 @@ describe('addMedia', () => {
 
   test('adds a photo, hidden until the publication goes online, then drops the original', async () => {
     stubDraft()
-    ingestImage.mockResolvedValue({ photo: { id: 'photo-1' } })
+    ingestImage.mockResolvedValue({ id: 'photo-1' })
 
     await expect(addMedia('post-1', INCOMING, 'image')).resolves.toEqual({ id: 'photo-1' })
 
     expect(ingestImage.mock.calls[0]?.[1]).toEqual({
-      source: 'upload',
+      alt: 'Pique-nique au jardin !',
       createdAt: '2026-11-12T10:00:00.000Z',
       postId: 'post-1',
       isPublished: false,
@@ -98,21 +98,13 @@ describe('addMedia', () => {
     expect(del).toHaveBeenCalledWith(INCOMING, expect.anything())
   })
 
-  test('re-encodes a video, sorts it by its poster frame and stores both files', async () => {
+  test('re-encodes a video and stores it with its poster frame', async () => {
     stubDraft()
     prepareVideoFromUrl.mockResolvedValue({
       video: Buffer.from('mp4'),
       poster: Buffer.from('webp'),
       width: 720,
       height: 1280,
-    })
-    classifyPhoto.mockResolvedValue({
-      categorySlug: 'motricite',
-      confidence: 0.8,
-      alt: 'Des enfants dansent',
-      caption: 'Danse',
-      isNewCategory: false,
-      newCategory: null,
     })
 
     const video = await addMedia('post-1', INCOMING, 'video')
@@ -126,30 +118,13 @@ describe('addMedia', () => {
       mediaType: 'video',
       width: 720,
       height: 1280,
-      categorySlug: 'motricite',
+      alt: 'Pique-nique au jardin !',
       isPublished: false,
       postId: 'post-1',
     })
     expect(del).toHaveBeenCalledWith(INCOMING, expect.anything())
   })
 
-  test('creates the category Gemini proposes for a video', async () => {
-    stubDraft()
-    prepareVideoFromUrl.mockResolvedValue({ video: Buffer.from('a'), poster: Buffer.from('b'), width: 1, height: 1 })
-    classifyPhoto.mockResolvedValue({
-      categorySlug: 'cuisine',
-      confidence: 0.7,
-      alt: 'x',
-      caption: null,
-      isNewCategory: true,
-      newCategory: { slug: 'cuisine', label: 'Cuisine', emoji: '🍪', description: 'Petits chefs.' },
-    })
-    ensureCategory.mockResolvedValue('cuisine')
-
-    await addMedia('post-1', INCOMING, 'video')
-
-    expect(ensureCategory).toHaveBeenCalledWith(expect.objectContaining({ slug: 'cuisine' }))
-  })
 
   test('returns null for an unknown publication, and still drops the upload', async () => {
     query.mockResolvedValue([])
@@ -175,7 +150,7 @@ describe('addMedia', () => {
 describe('publishDraft', () => {
   test('puts every item online at once, dated now', async () => {
     query.mockImplementation(async (text: string) => {
-      if (text.startsWith('select id, created_at from posts')) return [DRAFT_ROW]
+      if (text.startsWith('select id, created_at, body from posts')) return [DRAFT_ROW]
       if (text.startsWith('update photos')) return [{ id: 'a' }, { id: 'b' }]
       return []
     })
@@ -186,7 +161,7 @@ describe('publishDraft', () => {
 
   test('does nothing on a second click', async () => {
     query.mockImplementation(async (text: string) => {
-      if (text.startsWith('select id, created_at from posts')) return [DRAFT_ROW]
+      if (text.startsWith('select id, created_at, body from posts')) return [DRAFT_ROW]
       if (text.startsWith('select count(*)')) return [{ total: 2 }]
       return []
     })
@@ -197,7 +172,7 @@ describe('publishDraft', () => {
 
   test('removes an empty publication and explains why', async () => {
     query.mockImplementation(async (text: string) => {
-      if (text.startsWith('select id, created_at from posts')) return [DRAFT_ROW]
+      if (text.startsWith('select id, created_at, body from posts')) return [DRAFT_ROW]
       if (text.startsWith('select count(*)')) return [{ total: 0 }]
       return []
     })

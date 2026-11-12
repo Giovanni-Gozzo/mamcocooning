@@ -13,7 +13,7 @@ interface SiteImagesManagerProps {
 }
 
 const GROUPS: readonly { id: SiteImageGroup; title: string }[] = [
-  { id: 'maison', title: 'La maison (visite pièce par pièce et haut de l’accueil)' },
+  { id: 'maison', title: 'La visite de la maison, pièce par pièce' },
   { id: 'equipe', title: 'L’équipe' },
 ]
 
@@ -104,11 +104,18 @@ export function SiteImagesManager({ images, isReady }: SiteImagesManagerProps) {
                           sizes="(max-width: 640px) 100vw, 33vw"
                           className="object-cover"
                         />
-                        {image.isCustom && (
-                          <span className="absolute top-3 left-3 rounded-full bg-sage px-3 py-1 text-[0.7rem] font-bold text-cream">
-                            Photo modifiée
-                          </span>
-                        )}
+                        <span className="absolute top-3 left-3 flex flex-col items-start gap-1">
+                          {image.isInHero && (
+                            <span className="rounded-full bg-honey px-3 py-1 text-[0.7rem] font-bold text-ink">
+                              Aussi en haut de l’accueil
+                            </span>
+                          )}
+                          {image.isCustom && (
+                            <span className="rounded-full bg-sage px-3 py-1 text-[0.7rem] font-bold text-cream">
+                              Photo modifiée
+                            </span>
+                          )}
+                        </span>
                       </button>
                     ) : (
                       <div className="grid aspect-[4/3] place-items-center bg-clay/30 text-sm text-ink-soft">

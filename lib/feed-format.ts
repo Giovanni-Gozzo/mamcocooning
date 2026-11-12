@@ -22,8 +22,8 @@ export function formatFeedDate(iso: string): string {
 }
 
 /** Text shown on a publication: its own words, or a short line for the others. */
-export function feedText(item: FeedItem, categoryLabel: string): string | null {
-  if (item.kind === 'memories') return `Quelques souvenirs : ${categoryLabel.toLowerCase()}.`
+export function feedText(item: FeedItem): string | null {
+  if (item.kind === 'memories') return 'Quelques souvenirs de la MAM.'
   if (item.body !== null) return item.body
   return item.photos[0]?.caption ?? null
 }

@@ -18,7 +18,9 @@ const nextConfig: NextConfig = {
       // The photo gallery became the news feed; ?categorie= is carried over.
       { source: '/galerie', destination: '/actualites', permanent: true },
       { source: '/index.html', destination: '/', permanent: true },
-      { source: '/programme.html', destination: '/programmes', permanent: true },
+      // The daily schedule page was removed; its links lead home.
+      { source: '/programme.html', destination: '/', permanent: true },
+      { source: '/programmes', destination: '/', permanent: true },
       { source: '/as.html', destination: '/equipe', permanent: true },
       { source: '/contact.html', destination: '/contact', permanent: true },
     ]

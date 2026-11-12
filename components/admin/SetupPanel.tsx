@@ -9,7 +9,6 @@ const HINTS: Record<string, string> = {
   SESSION_SECRET: 'Généré par la même commande, sur la deuxième ligne.',
   DATABASE_URL: 'Vercel > Storage > Create Database > Neon. Ajoutée automatiquement.',
   BLOB_READ_WRITE_TOKEN: 'Vercel > Storage > Create Database > Blob. Ajoutée automatiquement.',
-  GEMINI_API_KEY: 'Clé gratuite sur aistudio.google.com/apikey.',
 }
 
 interface SetupPanelProps {
@@ -36,7 +35,7 @@ export function SetupPanel({ missing, isDatabaseReady }: SetupPanelProps) {
       }
 
       setStatus(
-        `Base prête : ${payload.data.categoriesSynced} catégories, ${payload.data.importedPhotos} photos importées.`,
+        `Base prête : ${payload.data.importedPhotos} photo(s) de l’ancien site importée(s).`,
       )
       router.refresh()
     } catch {
@@ -52,7 +51,7 @@ export function SetupPanel({ missing, isDatabaseReady }: SetupPanelProps) {
 
       {missing.length === 0 ? (
         <p className="mt-2 leading-relaxed text-sage-deep">
-          Tout est configuré : stockage, base de données et classement automatique.
+          Tout est configuré : stockage et base de données.
         </p>
       ) : (
         <>
@@ -72,8 +71,8 @@ export function SetupPanel({ missing, isDatabaseReady }: SetupPanelProps) {
 
       <div className="mt-7 border-t border-clay/50 pt-6">
         <p className="text-sm leading-relaxed text-ink-soft">
-          L&rsquo;initialisation crée les tables, enregistre les catégories et importe les photos
-          déjà présentes sur le site. Elle peut être relancée sans risque.
+          La base se met à jour toute seule. Ce bouton le fait à la demande et importe les photos
+          déjà présentes sur le site. L’opération peut être relancée sans risque.
         </p>
         <Button
           type="button"

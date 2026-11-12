@@ -12,10 +12,10 @@ import { nanoid } from 'nanoid'
 import { requireSql } from './db'
 import { env } from './env'
 import { UserFacingError } from './errors'
-import { classifyPhoto } from './gemini'
-import { MAX_UPLOAD_BYTES, prepareForAnalysis } from './image'
-import { ingestImage } from './ingest'
-import { createPhoto, ensureCategory, listAllCategories } from './photos'
+import { MAX_UPLOAD_BYTES } from './image'
+import { altFromText, ingestImage } from './ingest'
+import { createPhoto } from './photos'
+import { FALLBACK_CATEGORY_SLUG } from './taxonomy'
 import type { MediaType, Photo } from './types'
 import { prepareVideoFromUrl } from './video'
 
@@ -28,6 +28,7 @@ const BLOB_HOST_SUFFIX = '.public.blob.vercel-storage.com'
 export interface Draft {
   readonly id: string
   readonly createdAt: string
+  readonly body: string | null
 }
 
 /** Only files the browser just uploaded to our own storage may be processed. */
@@ -44,25 +45,37 @@ export function isIncomingUpload(url: string): boolean {
   }
 }
 
+interface DraftRow {
+  id: string
+  created_at: string | Date
+  body: string | null
+}
+
+const toDraft = (row: DraftRow): Draft => ({
+  id: row.id,
+  createdAt: new Date(row.created_at).toISOString(),
+  body: row.body,
+})
+
 export async function createDraft(body: string): Promise<Draft> {
   const text = body.trim().slice(0, MAX_POST_TEXT_LENGTH)
   const rows = (await requireSql().query(
     `insert into posts (id, body, source, created_at) values ($1, $2, 'admin', now())
-     returning id, created_at`,
+     returning id, created_at, body`,
     [nanoid(ID_LENGTH), text.length > 0 ? text : null],
-  )) as { id: string; created_at: string | Date }[]
+  )) as DraftRow[]
   const row = rows[0]
   if (row === undefined) throw new Error('Création de la publication échouée.')
-  return { id: row.id, createdAt: new Date(row.created_at).toISOString() }
+  return toDraft(row)
 }
 
 async function findDraft(postId: string): Promise<Draft | null> {
   const rows = (await requireSql().query(
-    `select id, created_at from posts where id = $1 and source = 'admin'`,
+    `select id, created_at, body from posts where id = $1 and source = 'admin'`,
     [postId],
-  )) as { id: string; created_at: string | Date }[]
+  )) as DraftRow[]
   const row = rows[0]
-  return row === undefined ? null : { id: row.id, createdAt: new Date(row.created_at).toISOString() }
+  return row === undefined ? null : toDraft(row)
 }
 
 async function countMedia(postId: string): Promise<number> {
@@ -84,14 +97,6 @@ async function fetchImage(url: string): Promise<ArrayBuffer> {
 async function addVideo(draft: Draft, url: string): Promise<Photo> {
   const prepared = await prepareVideoFromUrl(url)
 
-  // The poster frame tells Gemini what the video shows, like a photo would.
-  const categories = await listAllCategories()
-  const classification = await classifyPhoto(await prepareForAnalysis(prepared.poster), categories)
-  const categorySlug =
-    classification.isNewCategory && classification.newCategory !== null
-      ? await ensureCategory(classification.newCategory)
-      : classification.categorySlug
-
   const id = nanoid(ID_LENGTH)
   const options = { access: 'public' as const, token: env.blobToken ?? undefined, addRandomSuffix: false }
   const video = await put(`videos/${id}.mp4`, prepared.video, { ...options, contentType: 'video/mp4' })
@@ -102,10 +107,10 @@ async function addVideo(draft: Draft, url: string): Promise<Photo> {
     url: video.url,
     width: prepared.width,
     height: prepared.height,
-    alt: classification.alt,
-    caption: classification.caption,
-    categorySlug,
-    confidence: classification.confidence,
+    alt: altFromText(draft.body),
+    caption: null,
+    categorySlug: FALLBACK_CATEGORY_SLUG,
+    confidence: null,
     source: 'upload',
     createdAt: draft.createdAt,
     postId: draft.id,
@@ -127,13 +132,12 @@ export async function addMedia(postId: string, url: string, kind: MediaType): Pr
     }
 
     if (kind === 'video') return await addVideo(draft, url)
-    const { photo } = await ingestImage(await fetchImage(url), {
-      source: 'upload',
+    return await ingestImage(await fetchImage(url), {
+      alt: altFromText(draft.body),
       createdAt: draft.createdAt,
       postId: draft.id,
       isPublished: false,
     })
-    return photo
   } finally {
     // The original (with its metadata) is never kept.
     await del(url, { token: env.blobToken ?? undefined }).catch((error: unknown) => {

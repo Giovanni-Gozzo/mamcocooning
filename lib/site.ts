@@ -13,7 +13,7 @@ export const SITE = {
   },
   phone: '06 67 41 86 35',
   phoneHref: '+33667418635',
-  hours: { days: 'Du lundi au vendredi', time: '7h30 – 18h30' },
+  hours: { days: 'Du lundi au vendredi', time: '7h30 – 17h30' },
   /** Neighbouring towns parents actually commute from, for local search. */
   areaServed: [
     'Entraigues-sur-la-Sorgue',
@@ -29,7 +29,6 @@ export const SITE = {
 
 export const NAV_LINKS = [
   { href: '/', label: 'Accueil' },
-  { href: '/programmes', label: 'Nos journées' },
   { href: '/actualites', label: 'Actualités' },
   { href: '/equipe', label: 'L’équipe' },
   { href: '/contact', label: 'Contact' },
@@ -42,6 +41,8 @@ export interface TeamMember {
   readonly bio: string
   readonly photoUrl: string | null
   readonly initials: string
+  /** Shown on the team and contact pages. */
+  readonly phone: { readonly display: string; readonly href: string } | null
 }
 
 export const TEAM: readonly TeamMember[] = [
@@ -52,6 +53,7 @@ export const TEAM: readonly TeamMember[] = [
     bio: 'Je m’épanouis pleinement dans le secteur de la petite enfance en offrant un accueil bienveillant, des activités ludiques et un environnement propice à l’éveil et au développement harmonieux des enfants.',
     photoUrl: '/img/equipe/sigrid-gozzo.webp',
     initials: 'SG',
+    phone: { display: '06 67 41 86 35', href: '+33667418635' },
   },
   {
     name: 'Julie Delannoy',
@@ -60,6 +62,7 @@ export const TEAM: readonly TeamMember[] = [
     bio: 'Julie, c’est le rayon de soleil de la MAM ! Toujours partante pour une chanson, une chasse aux trésors dans le jardin ou une course de petites voitures, elle transforme chaque journée en aventure. Et quand vient l’heure du câlin ou de la sieste, elle sait aussi faire tout doux. Avec elle, on rit beaucoup… et on grandit encore plus.',
     photoUrl: '/img/equipe/julie-delannoy.webp',
     initials: 'JD',
+    phone: { display: '06 87 35 91 66', href: '+33687359166' },
   },
 ]
 
@@ -74,7 +77,7 @@ export const VALUES: readonly Value[] = [
   {
     doodle: 'heart',
     title: 'Un rythme respecté',
-    body: 'Chaque enfant a son propre tempo. Siestes, repas et jeux suivent le sien, jamais l’inverse.',
+    body: 'Chaque enfant a son propre tempo.',
   },
   {
     doodle: 'teddy',
@@ -93,51 +96,6 @@ export const VALUES: readonly Value[] = [
   },
 ]
 
-export interface DayMoment {
-  readonly time: string
-  readonly title: string
-  readonly body: string
-  readonly doodle: 'duck' | 'blocks' | 'heart' | 'moon' | 'sprout' | 'balloon'
-}
-
-export const DAY_MOMENTS: readonly DayMoment[] = [
-  {
-    time: '7h30',
-    title: 'Les arrivées',
-    doodle: 'duck',
-    body: 'Un accueil individuel, le temps des transmissions avec vous, puis un jeu libre en douceur.',
-  },
-  {
-    time: '9h30',
-    title: 'L’atelier du matin',
-    doodle: 'blocks',
-    body: 'Peinture, pâte à modeler, éveil musical ou parcours de motricité selon le jour et les envies.',
-  },
-  {
-    time: '11h15',
-    title: 'Le repas',
-    doodle: 'heart',
-    body: 'Des repas équilibrés partagés à table, et l’apprentissage progressif de l’autonomie.',
-  },
-  {
-    time: '12h30',
-    title: 'La sieste',
-    doodle: 'moon',
-    body: 'Chacun son lit, sa turbulette et son doudou, dans une chambre calme et tamisée.',
-  },
-  {
-    time: '15h00',
-    title: 'Goûter et jardin',
-    doodle: 'sprout',
-    body: 'Un goûter maison, puis le jardin, les semis, les balades ou la lecture d’histoires.',
-  },
-  {
-    time: '17h00',
-    title: 'Les retrouvailles',
-    doodle: 'balloon',
-    body: 'On raconte la journée, on montre ce qu’on a fabriqué, et on repart avec ses créations.',
-  },
-]
 
 export interface Stat {
   readonly value: number
@@ -146,9 +104,9 @@ export interface Stat {
 }
 
 export const STATS: readonly Stat[] = [
-  { value: 23, suffix: ' ans', label: 'd’expérience auprès des tout-petits' },
+  { value: 18, suffix: ' ans', label: 'd’expérience auprès des tout-petits' },
   { value: 8, suffix: '', label: 'enfants maximum, pour un vrai cocon' },
-  { value: 11, suffix: 'h', label: 'd’amplitude horaire, 7h30 à 18h30' },
+  { value: 10, suffix: 'h', label: 'd’amplitude horaire, 7h30 à 17h30' },
   { value: 2, suffix: '', label: 'professionnelles agréées et formées' },
 ]
 
@@ -157,6 +115,9 @@ export interface TourStop {
   readonly title: string
   readonly body: string
 }
+
+/** Tour stops shown in the collage at the top of the homepage, in display order. */
+export const HERO_STOP_INDEXES = [0, 3, 1, 5] as const
 
 /** Guided tour of the house, shot room by room. */
 export const HOUSE_TOUR: readonly TourStop[] = [

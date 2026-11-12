@@ -6,16 +6,13 @@ import { PostComposer } from '@/components/admin/PostComposer'
 import { SetupPanel } from '@/components/admin/SetupPanel'
 import { SiteImagesManager } from '@/components/admin/SiteImagesManager'
 import { isAuthenticated } from '@/lib/auth'
-import { FacebookSyncPanel } from '@/components/admin/FacebookSyncPanel'
 import {
-  env,
   isAdminConfigured,
   isBlobConfigured,
   isDatabaseConfigured,
-  isFacebookConfigured,
   missingAdminConfig,
 } from '@/lib/env'
-import { listAllCategories, listCategoriesWithCounts, listPhotos } from '@/lib/photos'
+import { listPhotos } from '@/lib/photos'
 import { listSiteImages } from '@/lib/site-images'
 
 export const dynamic = 'force-dynamic'
@@ -36,9 +33,7 @@ export default async function AdminPage() {
     )
   }
 
-  const [categories, categoriesWithCounts, photos, siteImages] = await Promise.all([
-    listAllCategories(),
-    listCategoriesWithCounts(),
+  const [photos, siteImages] = await Promise.all([
     listPhotos({ limit: 400 }),
     listSiteImages(),
   ])
@@ -55,9 +50,8 @@ export default async function AdminPage() {
             </p>
             <h1 className="mt-2 text-4xl">Bonjour Sigrid 👋</h1>
             <p className="mt-2 leading-relaxed text-ink-soft">
-              {photos.length} photo{photos.length > 1 ? 's' : ''} en ligne, réparties dans{' '}
-              {categoriesWithCounts.length} catégorie
-              {categoriesWithCounts.length > 1 ? 's' : ''}.
+              {photos.length} photo{photos.length > 1 ? 's' : ''} et vidéo
+              {photos.length > 1 ? 's' : ''} en ligne.
             </p>
           </div>
           <LogoutButton />
@@ -75,29 +69,27 @@ export default async function AdminPage() {
         )}
 
         <section className="mt-16">
-          <h2 className="text-2xl">Les photos et vidéos en ligne</h2>
+          <h2 className="text-2xl">Photos de la page d&rsquo;accueil</h2>
           <p className="mt-2 leading-relaxed text-ink-soft">
-            Si une photo n&rsquo;est pas dans la bonne catégorie, changez-la ici : le site se met à
-            jour tout seul.
-          </p>
-          <div className="mt-7">
-            <PhotoManager photos={photos} categories={categories} isReady={canUpload} />
-          </div>
-        </section>
-
-        <section className="mt-16">
-          <h2 className="text-2xl">Photos de la maison et de l&rsquo;équipe</h2>
-          <p className="mt-2 leading-relaxed text-ink-soft">
-            Les photos fixes du site. Touchez une photo pour la voir en entier, ou remplacez-la.
+            Chaque pièce de la visite de la maison, et les portraits de l&rsquo;équipe. Touchez une
+            photo pour la voir en entier, ou remplacez-la : la page d&rsquo;accueil se met à jour
+            toute seule.
           </p>
           <div className="mt-7">
             <SiteImagesManager images={siteImages} isReady={canUpload} />
           </div>
         </section>
 
-        <div className="mt-16">
-          <FacebookSyncPanel isConfigured={isFacebookConfigured()} hashtag={env.facebookHashtag} />
-        </div>
+        <section className="mt-16">
+          <h2 className="text-2xl">Les photos et vidéos des publications</h2>
+          <p className="mt-2 leading-relaxed text-ink-soft">
+            Touchez une photo pour la voir en entier. Vous pouvez retirer du site celles qui ne
+            doivent plus y être.
+          </p>
+          <div className="mt-7">
+            <PhotoManager photos={photos} isReady={canUpload} />
+          </div>
+        </section>
 
         <div className="mt-16">
           <SetupPanel missing={missingAdminConfig()} isDatabaseReady={isDatabaseConfigured()} />
