@@ -23,12 +23,6 @@ export const SCHEMA_STATEMENTS: readonly string[] = [
    )`,
   `create index if not exists photos_category_idx on photos (category_slug, created_at desc)`,
   `create index if not exists photos_published_idx on photos (is_published, created_at desc)`,
-  // One-off facts about the installation, e.g. that the old photos were imported.
-  `create table if not exists app_flags (
-     key        text primary key,
-     value      text not null,
-     updated_at timestamptz not null default now()
-   )`,
   // Replacements for the fixed photos of the site (house tour, team portraits).
   `create table if not exists site_images (
      slot       text primary key,

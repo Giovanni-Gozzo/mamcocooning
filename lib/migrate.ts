@@ -1,4 +1,7 @@
-/** Applies the schema and syncs the seed categories. Idempotent. */
+/**
+ * Applies the schema and syncs the seed categories. Idempotent; run on its own
+ * by lib/db.ts whenever the database is behind the code.
+ */
 import { SCHEMA_STATEMENTS } from './schema'
 import { DEFAULT_CATEGORIES } from './taxonomy'
 
@@ -34,9 +37,3 @@ export async function applySchema(run: StatementRunner): Promise<MigrationReport
   }
 }
 
-/** The "Initialiser la base" button. Day to day, lib/db.ts runs the same thing on its own. */
-export async function runMigration(): Promise<MigrationReport> {
-  const { requireRawSql } = await import('./db')
-  const raw = requireRawSql()
-  return applySchema((text, params) => raw.query(text, params))
-}

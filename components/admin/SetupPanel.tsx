@@ -1,9 +1,3 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { Button } from '@/components/ui/Button'
-
 const HINTS: Record<string, string> = {
   ADMIN_PASSWORD_HASH: 'Généré par « npm run hash:password "votre mot de passe" ».',
   SESSION_SECRET: 'Généré par la même commande, sur la deuxième ligne.',
@@ -13,47 +7,17 @@ const HINTS: Record<string, string> = {
 
 interface SetupPanelProps {
   readonly missing: readonly string[]
-  readonly isDatabaseReady: boolean
 }
 
-export function SetupPanel({ missing, isDatabaseReady }: SetupPanelProps) {
-  const router = useRouter()
-  const [status, setStatus] = useState<string | null>(null)
-  const [isRunning, setIsRunning] = useState(false)
-
-  async function runSetup() {
-    setIsRunning(true)
-    setStatus(null)
-
-    try {
-      const response = await fetch('/api/admin/setup', { method: 'POST' })
-      const payload = await response.json()
-
-      if (!response.ok || payload.success !== true) {
-        setStatus(payload.error ?? 'Initialisation impossible.')
-        return
-      }
-
-      setStatus(
-        payload.data.importedPhotos > 0
-          ? `Base prête : ${payload.data.importedPhotos} photo(s) de l’ancien site importée(s).`
-          : 'Base à jour.',
-      )
-      router.refresh()
-    } catch {
-      setStatus('Initialisation impossible. Vérifiez votre réseau.')
-    } finally {
-      setIsRunning(false)
-    }
-  }
-
+/** Tells what is still missing in Vercel. The database keeps itself up to date. */
+export function SetupPanel({ missing }: SetupPanelProps) {
   return (
     <section className="rounded-[2.5rem] bg-sand/70 p-8 ring-1 ring-clay/45">
       <h2 className="text-2xl">Configuration</h2>
 
       {missing.length === 0 ? (
         <p className="mt-2 leading-relaxed text-sage-deep">
-          Tout est configuré : stockage et base de données.
+          Tout est configuré : stockage et base de données. La base se met à jour toute seule.
         </p>
       ) : (
         <>
@@ -70,29 +34,6 @@ export function SetupPanel({ missing, isDatabaseReady }: SetupPanelProps) {
           </ul>
         </>
       )}
-
-      <div className="mt-7 border-t border-clay/50 pt-6">
-        <p className="text-sm leading-relaxed text-ink-soft">
-          La base se met à jour toute seule. Ce bouton le fait à la demande ; il n’importe les
-          photos de l’ancien site qu’une seule fois, à la première installation. Il peut être
-          relancé sans risque : une photo retirée ne revient jamais.
-        </p>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => void runSetup()}
-          disabled={!isDatabaseReady || isRunning}
-          className="mt-4"
-        >
-          {isRunning ? 'Initialisation…' : 'Initialiser la base'}
-        </Button>
-
-        {status !== null && (
-          <p role="status" className="mt-4 text-sm font-semibold text-ink">
-            {status}
-          </p>
-        )}
-      </div>
     </section>
   )
 }
