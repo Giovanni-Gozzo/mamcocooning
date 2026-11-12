@@ -133,7 +133,8 @@ const FEED_SQL = `
          json_agg(json_build_object(
            'id', g.id, 'url', g.url, 'width', g.width, 'height', g.height,
            'alt', g.alt, 'caption', g.caption, 'category_slug', g.category_slug,
-           'confidence', g.confidence, 'source', g.source, 'created_at', g.created_at
+           'confidence', g.confidence, 'source', g.source, 'created_at', g.created_at,
+           'media_type', g.media_type, 'poster_url', g.poster_url
          ) order by g.created_at, g.id) as photos
     from grouped g
     left join posts po on po.id = g.post_id

@@ -4,7 +4,9 @@ import { ButtonLink } from '@/components/ui/Button'
 import { FloatingJungle, type JungleSpec } from '@/components/ui/FloatingJungle'
 import { Reveal } from '@/components/ui/Reveal'
 import { SectionTitle } from '@/components/ui/SectionTitle'
+import { PlayBadge } from '@/components/ui/PlayBadge'
 import { feedText, formatFeedDate } from '@/lib/feed-format'
+import { describeMedia, thumbnailUrl } from '@/lib/media'
 import type { CategoryWithCount, FeedItem } from '@/lib/types'
 
 const NEWS_JUNGLE: readonly JungleSpec[] = [
@@ -48,16 +50,17 @@ export function LatestNews({ items, categories }: LatestNewsProps) {
                 <div className="relative aspect-[4/3] bg-clay/30">
                   {cover !== undefined && (
                     <Image
-                      src={cover.url}
+                      src={thumbnailUrl(cover)}
                       alt={cover.alt}
                       fill
                       sizes="(max-width: 768px) 100vw, 33vw"
                       className="object-cover transition-transform duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-105"
                     />
                   )}
-                  {item.photos.length > 1 && (
+                  {cover?.mediaType === 'video' && <PlayBadge />}
+                  {(item.photos.length > 1 || cover?.mediaType === 'video') && (
                     <span className="absolute right-3 bottom-3 rounded-full bg-ink/70 px-2.5 py-1 text-xs font-bold text-cream">
-                      {item.photos.length} photos
+                      {describeMedia(item.photos)}
                     </span>
                   )}
                 </div>

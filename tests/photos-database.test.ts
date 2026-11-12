@@ -65,7 +65,17 @@ describe('listPhotos', () => {
       confidence: 0.91,
       source: 'upload',
       createdAt: '2026-03-04T10:15:00.000Z',
+      mediaType: 'image',
+      posterUrl: null,
     })
+  })
+
+  test('maps a video with its poster frame', async () => {
+    withCount(1, [{ ...PHOTO_ROW, media_type: 'video', poster_url: 'https://blob.example/p.webp' }])
+
+    const [video] = await listPhotos()
+
+    expect(video).toMatchObject({ mediaType: 'video', posterUrl: 'https://blob.example/p.webp' })
   })
 
   test('serves the committed photos while the database is still empty', async () => {

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Lightbox } from '@/components/gallery/Lightbox'
+import { PlayBadge } from '@/components/ui/PlayBadge'
+import { thumbnailUrl } from '@/lib/media'
 import type { Category, Photo } from '@/lib/types'
 
 const LOW_CONFIDENCE_THRESHOLD = 0.6
@@ -108,12 +110,13 @@ export function PhotoManager({ photos, categories, isReady }: PhotoManagerProps)
                 className="relative block aspect-[4/3] w-full cursor-zoom-in bg-clay/30"
               >
                 <Image
-                  src={photo.url}
+                  src={thumbnailUrl(photo)}
                   alt={photo.alt}
                   fill
                   sizes="(max-width: 640px) 100vw, 33vw"
                   className="object-cover"
                 />
+                {photo.mediaType === 'video' && <PlayBadge />}
                 {photo.confidence !== null && photo.confidence < LOW_CONFIDENCE_THRESHOLD && (
                   <span className="absolute top-3 left-3 rounded-full bg-honey px-3 py-1 text-[0.7rem] font-bold text-ink">
                     À vérifier

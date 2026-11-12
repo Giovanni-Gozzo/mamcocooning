@@ -2,6 +2,8 @@
 
 export type PhotoSource = 'upload' | 'legacy' | 'facebook'
 
+export type MediaType = 'image' | 'video'
+
 export interface Category {
   readonly slug: string
   readonly label: string
@@ -26,6 +28,10 @@ export interface Photo {
   readonly confidence: number | null
   readonly source: PhotoSource
   readonly createdAt: string
+  /** A "photo" of the feed can also be a video, shown with its poster frame. */
+  readonly mediaType: MediaType
+  /** Still image of a video (WebP), used for thumbnails. Null for photos. */
+  readonly posterUrl: string | null
 }
 
 /** One publication of the news feed: a date, an optional text, its photos. */

@@ -17,8 +17,10 @@ export interface IngestOptions {
   readonly source: Exclude<PhotoSource, 'legacy'>
   /** Keeps the gallery in chronological order for photos published elsewhere first. */
   readonly createdAt?: string
-  /** Attaches the photo to a feed publication (one Facebook post). */
+  /** Attaches the photo to a feed publication. */
   readonly postId?: string
+  /** False while a publication is being put together in /admin. */
+  readonly isPublished?: boolean
 }
 
 export interface IngestResult {
@@ -56,6 +58,7 @@ export async function ingestImage(input: ArrayBuffer, options: IngestOptions): P
     source: options.source,
     createdAt: options.createdAt,
     postId: options.postId,
+    isPublished: options.isPublished,
   })
 
   return { photo, createdCategory: classification.isNewCategory }

@@ -8,7 +8,7 @@
 import { getSql } from './db'
 import { LEGACY_PHOTOS } from './legacy-photos'
 import { DEFAULT_CATEGORIES, FALLBACK_CATEGORY_SLUG } from './taxonomy'
-import type { Category, CategoryWithCount, Photo, PhotoQuery, PhotoSource } from './types'
+import type { Category, CategoryWithCount, MediaType, Photo, PhotoQuery, PhotoSource } from './types'
 
 const DEFAULT_LIMIT = 120
 const MAX_LIMIT = 500
@@ -24,7 +24,13 @@ export interface PhotoRow {
   confidence: number | null
   source: string
   created_at: string | Date
+  media_type?: string
+  poster_url?: string | null
 }
+
+/** Every column a Photo is built from, in one place. */
+const PHOTO_COLUMNS =
+  'id, url, width, height, alt, caption, category_slug, confidence, source, created_at, media_type, poster_url'
 
 function toPhotoSource(value: string): PhotoSource {
   if (value === 'legacy' || value === 'facebook') return value
@@ -43,6 +49,8 @@ export function toPhoto(row: PhotoRow): Photo {
     confidence: row.confidence === null ? null : Number(row.confidence),
     source: toPhotoSource(row.source),
     createdAt: new Date(row.created_at).toISOString(),
+    mediaType: row.media_type === 'video' ? 'video' : 'image',
+    posterUrl: row.poster_url ?? null,
   }
 }
 
@@ -78,7 +86,7 @@ export async function listPhotos(query: PhotoQuery = {}): Promise<readonly Photo
     if (await isDatabaseEmpty()) return filterFallback(query)
 
     const rows = (await sql.query(
-      `select id, url, width, height, alt, caption, category_slug, confidence, source, created_at
+      `select ${PHOTO_COLUMNS}
          from photos
         where is_published = true
           and ($1::text is null or category_slug = $1)
@@ -117,7 +125,7 @@ export async function listCategoriesWithCounts(): Promise<readonly CategoryWithC
     const rows = (await sql.query(
       `select c.slug, c.label, c.emoji, c.description, c.sort_order,
               count(p.id)::int as photo_count,
-              (array_agg(p.url order by p.created_at desc))[1] as cover_url
+              (array_agg(coalesce(p.poster_url, p.url) order by p.created_at desc))[1] as cover_url
          from categories c
          join photos p on p.category_slug = c.slug and p.is_published = true
         group by c.slug, c.label, c.emoji, c.description, c.sort_order
@@ -200,6 +208,10 @@ export interface NewPhoto {
   readonly createdAt?: string
   /** The feed publication this photo belongs to, if any. */
   readonly postId?: string
+  /** False while a publication is still being put together. Defaults to true. */
+  readonly isPublished?: boolean
+  readonly mediaType?: MediaType
+  readonly posterUrl?: string | null
 }
 
 export async function createPhoto(photo: NewPhoto): Promise<Photo> {
@@ -209,9 +221,10 @@ export async function createPhoto(photo: NewPhoto): Promise<Photo> {
   }
 
   const rows = (await sql.query(
-    `insert into photos (id, url, width, height, alt, caption, category_slug, confidence, source, created_at, post_id)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, coalesce($10::timestamptz, now()), $11)
-     returning id, url, width, height, alt, caption, category_slug, confidence, source, created_at`,
+    `insert into photos (id, url, width, height, alt, caption, category_slug, confidence, source,
+                         created_at, post_id, is_published, media_type, poster_url)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, coalesce($10::timestamptz, now()), $11, $12, $13, $14)
+     returning ${PHOTO_COLUMNS}`,
     [
       photo.id,
       photo.url,
@@ -224,6 +237,9 @@ export async function createPhoto(photo: NewPhoto): Promise<Photo> {
       photo.source ?? 'upload',
       photo.createdAt ?? null,
       photo.postId ?? null,
+      photo.isPublished ?? true,
+      photo.mediaType ?? 'image',
+      photo.posterUrl ?? null,
     ],
   )) as PhotoRow[]
 
@@ -237,7 +253,7 @@ export async function findPhotoById(id: string): Promise<Photo | null> {
   if (sql === null) return LEGACY_PHOTOS.find((photo) => photo.id === id) ?? null
 
   const rows = (await sql.query(
-    `select id, url, width, height, alt, caption, category_slug, confidence, source, created_at
+    `select ${PHOTO_COLUMNS}
        from photos where id = $1`,
     [id],
   )) as PhotoRow[]
@@ -262,7 +278,7 @@ export async function movePhotoToCategory(id: string, categorySlug: string): Pro
 
   const rows = (await sql.query(
     `update photos set category_slug = $2 where id = $1
-     returning id, url, width, height, alt, caption, category_slug, confidence, source, created_at`,
+     returning ${PHOTO_COLUMNS}`,
     [id, categorySlug],
   )) as PhotoRow[]
 

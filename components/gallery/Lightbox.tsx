@@ -8,7 +8,7 @@ import type { Photo } from '@/lib/types'
 
 /** What the viewer needs: works for gallery photos and the fixed site photos alike. */
 export type LightboxPhoto = Pick<Photo, 'id' | 'url' | 'alt' | 'caption'> &
-  Partial<Pick<Photo, 'width' | 'height'>>
+  Partial<Pick<Photo, 'width' | 'height' | 'mediaType' | 'posterUrl'>>
 
 const subscribeNever = () => () => {}
 
@@ -93,14 +93,27 @@ export function Lightbox({ photos, activeIndex, onClose, onNavigate }: LightboxP
                     : FALLBACK_RATIO,
               }}
             >
-              <Image
-                src={photo.url}
-                alt={photo.alt}
-                fill
-                sizes="(max-width: 1024px) 100vw, 56rem"
-                className="object-contain"
-                priority
-              />
+              {photo.mediaType === 'video' ? (
+                <video
+                  key={photo.id}
+                  src={photo.url}
+                  poster={photo.posterUrl ?? undefined}
+                  controls
+                  autoPlay
+                  playsInline
+                  aria-label={photo.alt}
+                  className="absolute inset-0 size-full object-contain"
+                />
+              ) : (
+                <Image
+                  src={photo.url}
+                  alt={photo.alt}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 56rem"
+                  className="object-contain"
+                  priority
+                />
+              )}
             </div>
 
             <figcaption className="mt-4 px-1 text-center text-sm text-cream/85">

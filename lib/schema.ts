@@ -41,6 +41,9 @@ export const SCHEMA_STATEMENTS: readonly string[] = [
    )`,
   `alter table photos add column if not exists post_id text references posts(id) on delete set null`,
   `create index if not exists photos_post_idx on photos (post_id)`,
+  // Publications made from /admin can hold videos; their poster frame is a WebP.
+  `alter table photos add column if not exists media_type text not null default 'image'`,
+  `alter table photos add column if not exists poster_url text`,
   // Ledger of every Facebook image ever imported. It outlives the photo row, so
   // a picture Sigrid takes off the site is never pulled back in by the next sync.
   // photo_id stays null while an import is in progress or after it failed;

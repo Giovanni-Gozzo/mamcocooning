@@ -52,8 +52,12 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     // Removing the stored file is best-effort: the row is gone either way, and
     // a stray blob costs less than leaving a photo visible on the site.
-    if (photo.source === 'upload' && photo.url.startsWith('https://')) {
-      await del(photo.url, { token: env.blobToken ?? undefined }).catch((error: unknown) => {
+    // A video also has its poster frame stored next to it.
+    const storedFiles = [photo.url, photo.posterUrl].filter(
+      (url): url is string => url !== null && url.startsWith('https://'),
+    )
+    if (photo.source !== 'legacy' && storedFiles.length > 0) {
+      await del(storedFiles, { token: env.blobToken ?? undefined }).catch((error: unknown) => {
         console.error('[photo:delete] fichier non retiré du stockage', error)
       })
     }

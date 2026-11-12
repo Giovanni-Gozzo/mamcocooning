@@ -57,8 +57,8 @@ export const TEAM: readonly TeamMember[] = [
     name: 'Julie Delannoy',
     role: 'Assistante maternelle agréée',
     since: 'Rejoint la MAM en 2025',
-    bio: 'Julie accompagne les enfants au quotidien avec douceur et attention. Sa présentation complète arrive très bientôt.',
-    photoUrl: null,
+    bio: 'Julie, c’est le rayon de soleil de la MAM ! Toujours partante pour une chanson, une chasse aux trésors dans le jardin ou une course de petites voitures, elle transforme chaque journée en aventure. Et quand vient l’heure du câlin ou de la sieste, elle sait aussi faire tout doux. Avec elle, on rit beaucoup… et on grandit encore plus.',
+    photoUrl: '/img/equipe/julie-delannoy.webp',
     initials: 'JD',
   },
 ]

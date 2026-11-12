@@ -1,5 +1,6 @@
 import { PhotoMosaic } from './PhotoMosaic'
 import { feedText, formatFeedDate } from '@/lib/feed-format'
+import { describeMedia } from '@/lib/media'
 import type { CategoryWithCount, FeedItem } from '@/lib/types'
 
 interface FeedCardProps {
@@ -39,7 +40,7 @@ export function FeedCard({ item, category, onOpenPhoto, onSelectCategory }: Feed
       </div>
 
       {item.photos.length > 1 && (
-        <p className="mt-3 text-sm text-ink-faint">{item.photos.length} photos</p>
+        <p className="mt-3 text-sm text-ink-faint">{describeMedia(item.photos)}</p>
       )}
     </article>
   )

@@ -5,4 +5,6 @@
 import manifest from '@/data/legacy-photos.json'
 import type { Photo } from './types'
 
-export const LEGACY_PHOTOS: readonly Photo[] = manifest as readonly Photo[]
+export const LEGACY_PHOTOS: readonly Photo[] = (
+  manifest as readonly Omit<Photo, 'mediaType' | 'posterUrl'>[]
+).map((photo) => ({ ...photo, mediaType: 'image', posterUrl: null }))

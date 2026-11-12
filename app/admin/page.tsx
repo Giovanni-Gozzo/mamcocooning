@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { LoginForm } from '@/components/admin/LoginForm'
 import { LogoutButton } from '@/components/admin/LogoutButton'
 import { PhotoManager } from '@/components/admin/PhotoManager'
+import { PostComposer } from '@/components/admin/PostComposer'
 import { SetupPanel } from '@/components/admin/SetupPanel'
 import { SiteImagesManager } from '@/components/admin/SiteImagesManager'
-import { UploadDropzone } from '@/components/admin/UploadDropzone'
 import { isAuthenticated } from '@/lib/auth'
 import { FacebookSyncPanel } from '@/components/admin/FacebookSyncPanel'
 import {
@@ -64,7 +64,7 @@ export default async function AdminPage() {
         </div>
 
         <div className="mt-10">
-          <UploadDropzone categories={categories} isReady={canUpload} />
+          <PostComposer isReady={canUpload} />
         </div>
 
         {!canUpload && (
@@ -75,7 +75,7 @@ export default async function AdminPage() {
         )}
 
         <section className="mt-16">
-          <h2 className="text-2xl">Les photos en ligne</h2>
+          <h2 className="text-2xl">Les photos et vidéos en ligne</h2>
           <p className="mt-2 leading-relaxed text-ink-soft">
             Si une photo n&rsquo;est pas dans la bonne catégorie, changez-la ici : le site se met à
             jour tout seul.
