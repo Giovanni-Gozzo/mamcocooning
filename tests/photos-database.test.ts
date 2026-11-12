@@ -171,12 +171,39 @@ describe('single-photo operations', () => {
 })
 
 describe('importLegacyPhotos', () => {
-  test('counts only the rows that were actually inserted', async () => {
+  test('imports the old photos on the very first run, counting real inserts', async () => {
     query.mockResolvedValue([])
+    query.mockResolvedValueOnce([{ key: 'legacy_photos_imported' }]) // flag claimed
+    query.mockResolvedValueOnce([{ total: 0 }]) // no old photo yet
     query.mockResolvedValueOnce([{ id: 'legacy-001' }])
     query.mockResolvedValueOnce([{ id: 'legacy-002' }])
 
     await expect(importLegacyPhotos()).resolves.toBe(2)
-    expect(query).toHaveBeenCalledTimes(LEGACY_PHOTOS.length)
+    expect(query).toHaveBeenCalledTimes(2 + LEGACY_PHOTOS.length)
+  })
+
+  test('never runs twice, so deleted photos stay deleted', async () => {
+    query.mockResolvedValueOnce([]) // flag already there
+
+    await expect(importLegacyPhotos()).resolves.toBe(0)
+    expect(query).toHaveBeenCalledTimes(1)
+  })
+
+  test('skips a database that already went through the import before the flag existed', async () => {
+    query.mockResolvedValueOnce([{ key: 'legacy_photos_imported' }])
+    query.mockResolvedValueOnce([{ total: 45 }])
+
+    await expect(importLegacyPhotos()).resolves.toBe(0)
+    expect(query).toHaveBeenCalledTimes(2)
+  })
+
+  test('releases the flag when the import fails, so it can be tried again', async () => {
+    query.mockResolvedValueOnce([{ key: 'legacy_photos_imported' }])
+    query.mockResolvedValueOnce([{ total: 0 }])
+    query.mockRejectedValueOnce(new Error('ECONNRESET'))
+    query.mockResolvedValueOnce([])
+
+    await expect(importLegacyPhotos()).rejects.toThrow('ECONNRESET')
+    expect(query.mock.calls.at(-1)?.[0]).toContain('delete from app_flags')
   })
 })

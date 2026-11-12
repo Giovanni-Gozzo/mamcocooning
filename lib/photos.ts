@@ -179,8 +179,40 @@ export async function removePhoto(id: string): Promise<boolean> {
   return rows.length > 0
 }
 
-/** Copies the repository's photos into the database, skipping existing ids. */
+const LEGACY_IMPORT_FLAG = 'legacy_photos_imported'
+
+/**
+ * Copies the repository's photos into the database — once, ever. Running it
+ * again (the "Initialiser la base" button) must not bring back the old photos
+ * Sigrid has taken off the site.
+ */
 export async function importLegacyPhotos(): Promise<number> {
+  const sql = getSql()
+  if (sql === null) throw new Error('Base de données non configurée.')
+
+  const claimed = (await sql.query(
+    `insert into app_flags (key, value) values ($1, 'oui')
+     on conflict (key) do nothing returning key`,
+    [LEGACY_IMPORT_FLAG],
+  )) as { key: string }[]
+  if (claimed.length === 0) return 0
+
+  // A database filled before this flag existed already went through the import.
+  const existing = (await sql.query(
+    `select count(*)::int as total from photos where source = 'legacy'`,
+  )) as { total: number }[]
+  if (Number(existing[0]?.total ?? 0) > 0) return 0
+
+  try {
+    return await insertLegacyPhotos()
+  } catch (error) {
+    // Let a later attempt finish the job.
+    await sql.query('delete from app_flags where key = $1', [LEGACY_IMPORT_FLAG])
+    throw error
+  }
+}
+
+async function insertLegacyPhotos(): Promise<number> {
   const sql = getSql()
   if (sql === null) throw new Error('Base de données non configurée.')
 

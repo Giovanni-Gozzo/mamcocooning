@@ -35,7 +35,9 @@ export function SetupPanel({ missing, isDatabaseReady }: SetupPanelProps) {
       }
 
       setStatus(
-        `Base prête : ${payload.data.importedPhotos} photo(s) de l’ancien site importée(s).`,
+        payload.data.importedPhotos > 0
+          ? `Base prête : ${payload.data.importedPhotos} photo(s) de l’ancien site importée(s).`
+          : 'Base à jour.',
       )
       router.refresh()
     } catch {
@@ -71,8 +73,9 @@ export function SetupPanel({ missing, isDatabaseReady }: SetupPanelProps) {
 
       <div className="mt-7 border-t border-clay/50 pt-6">
         <p className="text-sm leading-relaxed text-ink-soft">
-          La base se met à jour toute seule. Ce bouton le fait à la demande et importe les photos
-          déjà présentes sur le site. L’opération peut être relancée sans risque.
+          La base se met à jour toute seule. Ce bouton le fait à la demande ; il n’importe les
+          photos de l’ancien site qu’une seule fois, à la première installation. Il peut être
+          relancé sans risque : une photo retirée ne revient jamais.
         </p>
         <Button
           type="button"
