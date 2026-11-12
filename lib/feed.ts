@@ -8,7 +8,7 @@
  */
 import { getSql } from './db'
 import { LEGACY_PHOTOS } from './legacy-photos'
-import { isDatabaseEmpty, toPhoto, type PhotoRow } from './photos'
+import { isDatabaseEmpty, listPhotos, toPhoto, type PhotoRow } from './photos'
 import { FEED_PAGE_SIZE } from './feed-format'
 import type { FeedItem, FeedPage, Photo } from './types'
 
@@ -30,27 +30,52 @@ function byOldestFirst(a: Photo, b: Photo): number {
   return a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id)
 }
 
-/** Groups the repository photos per activity, newest group first. */
-function legacyFeed(): readonly FeedItem[] {
-  const groups = new Map<string, Photo[]>()
-  for (const photo of LEGACY_PHOTOS) {
-    groups.set(photo.categorySlug, [...(groups.get(photo.categorySlug) ?? []), photo])
+/** Enough to cover the whole gallery of a MAM when the feed query is unavailable. */
+const MAX_FALLBACK_PHOTOS = 500
+
+function memoriesItem(slug: string, photos: readonly Photo[]): FeedItem {
+  const sorted = [...photos].sort(byOldestFirst)
+  return {
+    id: `legacy:${slug}`,
+    kind: 'memories',
+    createdAt: sorted.at(-1)?.createdAt ?? new Date(0).toISOString(),
+    body: null,
+    categorySlug: slug,
+    photos: sorted,
+  }
+}
+
+function singlePhotoItem(photo: Photo): FeedItem {
+  return {
+    id: photo.id,
+    kind: 'photo',
+    createdAt: photo.createdAt,
+    body: null,
+    categorySlug: photo.categorySlug,
+    photos: [photo],
+  }
+}
+
+/**
+ * Builds the feed in memory from a list of photos: repository photos gathered
+ * per activity, every other photo on its own. Newest first.
+ */
+function groupPhotos(photos: readonly Photo[]): readonly FeedItem[] {
+  const legacyByCategory = new Map<string, Photo[]>()
+  for (const photo of photos.filter((entry) => entry.source === 'legacy')) {
+    legacyByCategory.set(photo.categorySlug, [
+      ...(legacyByCategory.get(photo.categorySlug) ?? []),
+      photo,
+    ])
   }
 
-  return [...groups.entries()]
-    .map(([slug, photos]): FeedItem => {
-      const sorted = [...photos].sort(byOldestFirst)
-      return {
-        id: `legacy:${slug}`,
-        kind: 'memories',
-        createdAt: sorted.at(-1)?.createdAt ?? new Date(0).toISOString(),
-        body: null,
-        categorySlug: slug,
-        photos: sorted,
-      }
-    })
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id))
+  return [
+    ...[...legacyByCategory.entries()].map(([slug, group]) => memoriesItem(slug, group)),
+    ...photos.filter((photo) => photo.source !== 'legacy').map(singlePhotoItem),
+  ].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id))
 }
+
+const legacyFeed = (): readonly FeedItem[] => groupPhotos(LEGACY_PHOTOS)
 
 function paginate(items: readonly FeedItem[], query: FeedQuery): FeedPage {
   const scoped =
@@ -134,7 +159,10 @@ export async function listFeed(query: FeedQuery = {}): Promise<FeedPage> {
 
     return { items: rows.slice(0, limit).map(toFeedItem), hasMore: rows.length > limit }
   } catch (error) {
-    console.error('[feed] lecture impossible, repli sur les photos du dépôt', error)
-    return paginate(legacyFeed(), query)
+    // Typically the posts table is missing until "Initialiser la base" is run
+    // again. Falling back to the repository manifest would bring deleted
+    // photos back, so the feed is rebuilt from the photos actually stored.
+    console.error('[feed] lecture du fil impossible, repli sur les photos enregistrées', error)
+    return paginate(groupPhotos(await listPhotos({ limit: MAX_FALLBACK_PHOTOS })), query)
   }
 }
