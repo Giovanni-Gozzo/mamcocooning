@@ -95,6 +95,22 @@ describe('listFeed with a database', () => {
     expect(page.items).toHaveLength(Math.min(24, legacyCategories.size))
   })
 
+  test('rebuilds the feed from stored photos when the feed query fails, so deleted photos stay gone', async () => {
+    const legacyKept = { ...PHOTO, id: 'kept', source: 'legacy', category_slug: 'musique' }
+    const upload = { ...PHOTO, id: 'up', source: 'upload', created_at: '2026-11-13T09:00:00+00:00' }
+    query
+      .mockResolvedValueOnce([{ total: 2 }]) // feed: is the database empty?
+      .mockRejectedValueOnce(new Error('relation "posts" does not exist'))
+      .mockResolvedValueOnce([{ total: 2 }]) // listPhotos: is the database empty?
+      .mockResolvedValueOnce([upload, legacyKept])
+
+    const page = await listFeed()
+
+    const photoIds = page.items.flatMap((item) => item.photos.map((photo) => photo.id))
+    expect(photoIds).toEqual(['up', 'kept'])
+    expect(page.items.map((item) => item.kind)).toEqual(['photo', 'memories'])
+  })
+
   test('falls back to the repository photos when the database fails', async () => {
     query.mockRejectedValueOnce(new Error('ECONNREFUSED'))
 

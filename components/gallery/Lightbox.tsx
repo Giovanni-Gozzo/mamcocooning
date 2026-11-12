@@ -1,13 +1,21 @@
 'use client'
 
 import Image from 'next/image'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useSyncExternalStore } from 'react'
+import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import type { Photo } from '@/lib/types'
 
 /** What the viewer needs: works for gallery photos and the fixed site photos alike. */
 export type LightboxPhoto = Pick<Photo, 'id' | 'url' | 'alt' | 'caption'> &
   Partial<Pick<Photo, 'width' | 'height'>>
+
+const subscribeNever = () => () => {}
+
+/** True in the browser only: the portal target does not exist during server rendering. */
+function useIsClient(): boolean {
+  return useSyncExternalStore(subscribeNever, () => true, () => false)
+}
 
 /** Used when the size is unknown; the image is still shown whole (object-contain). */
 const FALLBACK_RATIO = '4 / 3'
@@ -21,6 +29,7 @@ interface LightboxProps {
 
 export function Lightbox({ photos, activeIndex, onClose, onNavigate }: LightboxProps) {
   const photo = activeIndex === null ? undefined : photos[activeIndex]
+  const isClient = useIsClient()
 
   const goTo = useCallback(
     (offset: number) => {
@@ -48,7 +57,11 @@ export function Lightbox({ photos, activeIndex, onClose, onNavigate }: LightboxP
     }
   }, [photo, goTo, onClose])
 
-  return (
+  if (!isClient) return null
+
+  // Rendered at the root of the page: inside an animated (transformed) parent,
+  // even a very high z-index would let parts of the site show through.
+  return createPortal(
     <AnimatePresence>
       {photo !== undefined && (
         <motion.div
@@ -125,7 +138,8 @@ export function Lightbox({ photos, activeIndex, onClose, onNavigate }: LightboxP
           )}
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }
 
