@@ -50,7 +50,7 @@ export const TEAM: readonly TeamMember[] = [
     role: 'Assistante maternelle agréée',
     since: 'Agréée depuis 2008',
     bio: 'Je m’épanouis pleinement dans le secteur de la petite enfance en offrant un accueil bienveillant, des activités ludiques et un environnement propice à l’éveil et au développement harmonieux des enfants.',
-    photoUrl: '/img/IMG_0428.heic.png',
+    photoUrl: '/img/equipe/sigrid-gozzo.webp',
     initials: 'SG',
   },
   {
