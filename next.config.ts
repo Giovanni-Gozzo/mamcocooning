@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // The photo gallery became the news feed; ?categorie= is carried over.
+      { source: '/galerie', destination: '/actualites', permanent: true },
       { source: '/index.html', destination: '/', permanent: true },
       { source: '/programme.html', destination: '/programmes', permanent: true },
       { source: '/as.html', destination: '/equipe', permanent: true },

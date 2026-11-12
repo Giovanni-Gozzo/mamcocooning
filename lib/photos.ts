@@ -13,7 +13,7 @@ import type { Category, CategoryWithCount, Photo, PhotoQuery, PhotoSource } from
 const DEFAULT_LIMIT = 120
 const MAX_LIMIT = 500
 
-interface PhotoRow {
+export interface PhotoRow {
   id: string
   url: string
   width: number
@@ -31,7 +31,7 @@ function toPhotoSource(value: string): PhotoSource {
   return 'upload'
 }
 
-function toPhoto(row: PhotoRow): Photo {
+export function toPhoto(row: PhotoRow): Photo {
   return {
     id: row.id,
     url: row.url,
@@ -63,7 +63,7 @@ function filterFallback(query: PhotoQuery): readonly Photo[] {
 }
 
 /** True when the database holds no photo yet, so we should serve the manifest. */
-async function isDatabaseEmpty(): Promise<boolean> {
+export async function isDatabaseEmpty(): Promise<boolean> {
   const sql = getSql()
   if (sql === null) return true
   const rows = (await sql.query('select count(*)::int as total from photos')) as { total: number }[]
@@ -198,6 +198,8 @@ export interface NewPhoto {
   readonly source?: PhotoSource
   /** ISO 8601. Defaults to the insertion time. */
   readonly createdAt?: string
+  /** The feed publication this photo belongs to, if any. */
+  readonly postId?: string
 }
 
 export async function createPhoto(photo: NewPhoto): Promise<Photo> {
@@ -207,8 +209,8 @@ export async function createPhoto(photo: NewPhoto): Promise<Photo> {
   }
 
   const rows = (await sql.query(
-    `insert into photos (id, url, width, height, alt, caption, category_slug, confidence, source, created_at)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, coalesce($10::timestamptz, now()))
+    `insert into photos (id, url, width, height, alt, caption, category_slug, confidence, source, created_at, post_id)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, coalesce($10::timestamptz, now()), $11)
      returning id, url, width, height, alt, caption, category_slug, confidence, source, created_at`,
     [
       photo.id,
@@ -221,6 +223,7 @@ export async function createPhoto(photo: NewPhoto): Promise<Photo> {
       photo.confidence,
       photo.source ?? 'upload',
       photo.createdAt ?? null,
+      photo.postId ?? null,
     ],
   )) as PhotoRow[]
 

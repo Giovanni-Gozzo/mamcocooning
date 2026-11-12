@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import { Lightbox } from '@/components/gallery/Lightbox'
 import type { Category, Photo } from '@/lib/types'
 
 const LOW_CONFIDENCE_THRESHOLD = 0.6
@@ -20,6 +21,7 @@ export function PhotoManager({ photos, categories, isReady }: PhotoManagerProps)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [pendingRemoval, setPendingRemoval] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   async function moveToCategory(id: string, categorySlug: string) {
     setBusyId(id)
@@ -89,7 +91,7 @@ export function PhotoManager({ photos, categories, isReady }: PhotoManagerProps)
 
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <AnimatePresence mode="popLayout">
-          {photos.map((photo) => (
+          {photos.map((photo, index) => (
             <motion.li
               key={photo.id}
               layout
@@ -99,7 +101,12 @@ export function PhotoManager({ photos, categories, isReady }: PhotoManagerProps)
               transition={{ duration: 0.35 }}
               className="overflow-hidden rounded-[1.75rem] bg-sand/70 ring-1 ring-clay/40"
             >
-              <div className="relative aspect-[4/3] bg-clay/30">
+              <button
+                type="button"
+                onClick={() => setOpenIndex(index)}
+                aria-label={`Voir en entier : ${photo.alt}`}
+                className="relative block aspect-[4/3] w-full cursor-zoom-in bg-clay/30"
+              >
                 <Image
                   src={photo.url}
                   alt={photo.alt}
@@ -112,7 +119,7 @@ export function PhotoManager({ photos, categories, isReady }: PhotoManagerProps)
                     À vérifier
                   </span>
                 )}
-              </div>
+              </button>
 
               <div className="p-4">
                 <p className="line-clamp-2 text-sm leading-snug text-ink-soft">{photo.alt}</p>
@@ -166,6 +173,13 @@ export function PhotoManager({ photos, categories, isReady }: PhotoManagerProps)
           ))}
         </AnimatePresence>
       </ul>
+
+      <Lightbox
+        photos={photos}
+        activeIndex={openIndex}
+        onClose={() => setOpenIndex(null)}
+        onNavigate={setOpenIndex}
+      />
     </div>
   )
 }

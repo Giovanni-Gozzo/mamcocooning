@@ -23,6 +23,24 @@ export const SCHEMA_STATEMENTS: readonly string[] = [
    )`,
   `create index if not exists photos_category_idx on photos (category_slug, created_at desc)`,
   `create index if not exists photos_published_idx on photos (is_published, created_at desc)`,
+  // Replacements for the fixed photos of the site (house tour, team portraits).
+  `create table if not exists site_images (
+     slot       text primary key,
+     url        text not null,
+     updated_at timestamptz not null default now()
+   )`,
+  // A publication of the news feed: one text and the photos attached to it.
+  // Photos without a post (manual uploads, repository photos) still show up
+  // in the feed, grouped on their own.
+  `create table if not exists posts (
+     id          text primary key,
+     external_id text unique,
+     body        text,
+     source      text not null default 'facebook',
+     created_at  timestamptz not null default now()
+   )`,
+  `alter table photos add column if not exists post_id text references posts(id) on delete set null`,
+  `create index if not exists photos_post_idx on photos (post_id)`,
   // Ledger of every Facebook image ever imported. It outlives the photo row, so
   // a picture Sigrid takes off the site is never pulled back in by the next sync.
   // photo_id stays null while an import is in progress or after it failed;

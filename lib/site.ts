@@ -30,7 +30,7 @@ export const SITE = {
 export const NAV_LINKS = [
   { href: '/', label: 'Accueil' },
   { href: '/programmes', label: 'Nos journées' },
-  { href: '/galerie', label: 'Galerie' },
+  { href: '/actualites', label: 'Actualités' },
   { href: '/equipe', label: 'L’équipe' },
   { href: '/contact', label: 'Contact' },
 ] as const

@@ -28,6 +28,28 @@ export interface Photo {
   readonly createdAt: string
 }
 
+/** One publication of the news feed: a date, an optional text, its photos. */
+export interface FeedItem {
+  readonly id: string
+  /**
+   * post: a Facebook publication with its text · photo: a single upload ·
+   * memories: the photos from the old site, gathered per activity.
+   */
+  readonly kind: 'post' | 'photo' | 'memories'
+  readonly createdAt: string
+  /** Already cleaned of hashtags and personal details. Null when there is no text. */
+  readonly body: string | null
+  /** Activity of the first photo, used for the badge and the filter. */
+  readonly categorySlug: string
+  /** Photos are shown oldest first, the way they were posted. */
+  readonly photos: readonly Photo[]
+}
+
+export interface FeedPage {
+  readonly items: readonly FeedItem[]
+  readonly hasMore: boolean
+}
+
 export interface PhotoQuery {
   readonly categorySlug?: string
   readonly limit?: number

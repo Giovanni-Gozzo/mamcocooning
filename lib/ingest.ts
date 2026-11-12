@@ -17,6 +17,8 @@ export interface IngestOptions {
   readonly source: Exclude<PhotoSource, 'legacy'>
   /** Keeps the gallery in chronological order for photos published elsewhere first. */
   readonly createdAt?: string
+  /** Attaches the photo to a feed publication (one Facebook post). */
+  readonly postId?: string
 }
 
 export interface IngestResult {
@@ -53,6 +55,7 @@ export async function ingestImage(input: ArrayBuffer, options: IngestOptions): P
     confidence: classification.confidence,
     source: options.source,
     createdAt: options.createdAt,
+    postId: options.postId,
   })
 
   return { photo, createdCategory: classification.isNewCategory }

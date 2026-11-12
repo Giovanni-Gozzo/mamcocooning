@@ -8,7 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return NAV_LINKS.map((link) => ({
     url: `${env.siteUrl}${link.href === '/' ? '' : link.href}`,
     lastModified,
-    changeFrequency: link.href === '/galerie' ? 'weekly' : 'monthly',
+    changeFrequency: link.href === '/actualites' ? 'daily' : 'monthly',
     priority: link.href === '/' ? 1 : 0.8,
   }))
 }
