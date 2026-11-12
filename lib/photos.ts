@@ -178,31 +178,3 @@ export async function removePhoto(id: string): Promise<boolean> {
   }[]
   return rows.length > 0
 }
-
-/** Copies the repository's photos into the database, skipping existing ids. */
-export async function importLegacyPhotos(): Promise<number> {
-  const sql = getSql()
-  if (sql === null) throw new Error('Base de données non configurée.')
-
-  let imported = 0
-  for (const photo of LEGACY_PHOTOS) {
-    const rows = (await sql.query(
-      `insert into photos (id, url, width, height, alt, caption, category_slug, confidence, source, created_at)
-       values ($1, $2, $3, $4, $5, $6, $7, null, 'legacy', $8)
-       on conflict (id) do nothing
-       returning id`,
-      [
-        photo.id,
-        photo.url,
-        photo.width,
-        photo.height,
-        photo.alt,
-        photo.caption,
-        photo.categorySlug,
-        photo.createdAt,
-      ],
-    )) as { id: string }[]
-    imported += rows.length
-  }
-  return imported
-}

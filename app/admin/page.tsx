@@ -92,7 +92,7 @@ export default async function AdminPage() {
         </section>
 
         <div className="mt-16">
-          <SetupPanel missing={missingAdminConfig()} isDatabaseReady={isDatabaseConfigured()} />
+          <SetupPanel missing={missingAdminConfig()} />
         </div>
       </div>
     </div>

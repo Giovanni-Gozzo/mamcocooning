@@ -60,9 +60,9 @@ SESSION_SECRET=…
 
 > Le mot de passe en clair n'est jamais stocké : seule son empreinte scrypt l'est.
 
-### 4. Initialiser la base
+### 4. Première connexion
 
-Redéployer, ouvrir `/admin` et se connecter. La base se met à jour toute seule à la première visite (et après chaque mise à jour du site) ; le bouton **« Initialiser la base »**, en bas de page, le fait aussi à la demande et importe les photos déjà présentes. L'opération est rejouable sans risque.
+Redéployer, ouvrir `/admin` et se connecter : la base se crée et se met à jour toute seule, à la première visite comme après chaque mise à jour du site. Il n'y a rien à cliquer.
 
 ### 5. Brancher le domaine
 
@@ -101,7 +101,7 @@ Dans **Settings › Domains**, ajouter `mamcocooning.fr` et suivre les instructi
 ```bash
 npm run dev               # serveur de développement
 npm run build             # build de production
-npm test                  # 134 tests unitaires
+npm test                  # 133 tests unitaires
 npm run test:watch        # tests en continu
 npm run hash:password     # génère ADMIN_PASSWORD_HASH et SESSION_SECRET
 npm run legacy:manifest    # régénère data/legacy-photos.json depuis public/img

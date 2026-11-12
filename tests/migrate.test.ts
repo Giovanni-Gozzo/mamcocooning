@@ -8,7 +8,8 @@ vi.mock('@/lib/db', () => ({
   requireRawSql: () => ({ query }),
 }))
 
-const { runMigration } = await import('@/lib/migrate')
+const { applySchema } = await import('@/lib/migrate')
+const runMigration = () => applySchema((text, params) => query(text, params))
 const { SCHEMA_STATEMENTS } = await import('@/lib/schema')
 const { DEFAULT_CATEGORIES } = await import('@/lib/taxonomy')
 
@@ -17,7 +18,7 @@ beforeEach(() => {
   query.mockResolvedValue([])
 })
 
-describe('runMigration', () => {
+describe('applySchema', () => {
   test('applies every schema statement then seeds every category', async () => {
     const report = await runMigration()
 

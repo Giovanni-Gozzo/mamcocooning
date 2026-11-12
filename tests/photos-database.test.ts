@@ -17,7 +17,6 @@ const {
   createPhoto,
   findPhotoById,
   removePhoto,
-  importLegacyPhotos,
 } = await import('@/lib/photos')
 const { LEGACY_PHOTOS } = await import('@/lib/legacy-photos')
 
@@ -167,16 +166,5 @@ describe('single-photo operations', () => {
 
     query.mockResolvedValueOnce([])
     await expect(removePhoto('inconnu')).resolves.toBe(false)
-  })
-})
-
-describe('importLegacyPhotos', () => {
-  test('counts only the rows that were actually inserted', async () => {
-    query.mockResolvedValue([])
-    query.mockResolvedValueOnce([{ id: 'legacy-001' }])
-    query.mockResolvedValueOnce([{ id: 'legacy-002' }])
-
-    await expect(importLegacyPhotos()).resolves.toBe(2)
-    expect(query).toHaveBeenCalledTimes(LEGACY_PHOTOS.length)
   })
 })
