@@ -8,7 +8,7 @@
 import { getSql } from './db'
 import { LEGACY_PHOTOS } from './legacy-photos'
 import { DEFAULT_CATEGORIES, FALLBACK_CATEGORY_SLUG } from './taxonomy'
-import type { Category, CategoryWithCount, Photo, PhotoQuery } from './types'
+import type { Category, CategoryWithCount, Photo, PhotoQuery, PhotoSource } from './types'
 
 const DEFAULT_LIMIT = 120
 const MAX_LIMIT = 500
@@ -26,6 +26,11 @@ interface PhotoRow {
   created_at: string | Date
 }
 
+function toPhotoSource(value: string): PhotoSource {
+  if (value === 'legacy' || value === 'facebook') return value
+  return 'upload'
+}
+
 function toPhoto(row: PhotoRow): Photo {
   return {
     id: row.id,
@@ -36,7 +41,7 @@ function toPhoto(row: PhotoRow): Photo {
     caption: row.caption,
     categorySlug: row.category_slug,
     confidence: row.confidence === null ? null : Number(row.confidence),
-    source: row.source === 'legacy' ? 'legacy' : 'upload',
+    source: toPhotoSource(row.source),
     createdAt: new Date(row.created_at).toISOString(),
   }
 }
@@ -190,7 +195,9 @@ export interface NewPhoto {
   readonly caption: string | null
   readonly categorySlug: string
   readonly confidence: number | null
-  readonly source?: 'upload' | 'legacy'
+  readonly source?: PhotoSource
+  /** ISO 8601. Defaults to the insertion time. */
+  readonly createdAt?: string
 }
 
 export async function createPhoto(photo: NewPhoto): Promise<Photo> {
@@ -200,8 +207,8 @@ export async function createPhoto(photo: NewPhoto): Promise<Photo> {
   }
 
   const rows = (await sql.query(
-    `insert into photos (id, url, width, height, alt, caption, category_slug, confidence, source)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `insert into photos (id, url, width, height, alt, caption, category_slug, confidence, source, created_at)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, coalesce($10::timestamptz, now()))
      returning id, url, width, height, alt, caption, category_slug, confidence, source, created_at`,
     [
       photo.id,
@@ -213,6 +220,7 @@ export async function createPhoto(photo: NewPhoto): Promise<Photo> {
       photo.categorySlug,
       photo.confidence,
       photo.source ?? 'upload',
+      photo.createdAt ?? null,
     ],
   )) as PhotoRow[]
 

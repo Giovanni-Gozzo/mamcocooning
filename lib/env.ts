@@ -28,6 +28,19 @@ export const env = {
   get siteUrl(): string {
     return read('NEXT_PUBLIC_SITE_URL') ?? 'https://mamcocooning.fr'
   },
+  get facebookPageId(): string | null {
+    return read('FACEBOOK_PAGE_ID')
+  },
+  get facebookPageToken(): string | null {
+    return read('FACEBOOK_PAGE_ACCESS_TOKEN')
+  },
+  /** Only posts carrying this hashtag reach the site. Stored without the "#". */
+  get facebookHashtag(): string {
+    return (read('FACEBOOK_HASHTAG') ?? 'site').replace(/^#/, '')
+  },
+  get cronSecret(): string | null {
+    return read('CRON_SECRET')
+  },
   get isProduction(): boolean {
     return process.env.NODE_ENV === 'production'
   },
@@ -37,6 +50,9 @@ export const isDatabaseConfigured = (): boolean => env.databaseUrl !== null
 export const isBlobConfigured = (): boolean => env.blobToken !== null
 export const isAdminConfigured = (): boolean =>
   env.adminPasswordHash !== null && env.sessionSecret !== null
+
+export const isFacebookConfigured = (): boolean =>
+  env.facebookPageId !== null && env.facebookPageToken !== null
 
 /** Lists what still needs configuring, for the admin diagnostics panel. */
 export function missingAdminConfig(): readonly string[] {

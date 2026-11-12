@@ -103,12 +103,43 @@ Chaque photo est ré-encodée en WebP, redimensionnée, et **toutes ses métadon
 
 ---
 
+## Photos depuis Facebook
+
+Sigrid publie sur la page Facebook de la MAM comme d'habitude. **Si le post contient `#site`**, ses photos arrivent sur le site, passent par le même traitement qu'un envoi depuis `/admin` (EXIF supprimés, classement et description par Gemini) et apparaissent dans la galerie à la date du post.
+
+- La récupération tourne **chaque jour à 18 h UTC** (`vercel.json`). Le bouton **« Récupérer maintenant »** dans `/admin` la lance tout de suite.
+- **Le texte du post n'est jamais repris** : il peut contenir des prénoms. Gemini rédige la description, avec ses règles de confidentialité.
+- Une photo retirée du site depuis `/admin` **ne revient jamais**, même si le post reste sur Facebook (registre `facebook_imports`).
+- Au plus 8 photos par passage, pour rester dans le temps d'exécution. Le reste arrive au passage suivant.
+- Seuls les **25 derniers posts** de la page sont examinés à chaque passage : un vieux post tagué après coup ne sera pas récupéré.
+- Une photo qui échoue (Facebook indisponible…) est retentée aux passages suivants, **3 fois au maximum**. Au-delà, l'envoyer à la main depuis `/admin`.
+- Les photos sont récupérées dans leur **taille d'origine** (pas l'aperçu réduit du fil).
+- Seuls les posts avec photo(s) sont pris en compte ; les vidéos sont ignorées.
+
+> ⚠️ Ne mettre `#site` que sur des photos dont **les parents ont signé l'autorisation de diffusion sur internet**.
+
+### Mise en place (une seule fois)
+
+Il faut que le compte Facebook utilisé soit **administrateur de la page** de la MAM.
+
+1. **Créer l'application Meta.** Sur [developers.facebook.com/apps](https://developers.facebook.com/apps), *Créer une app* › cas d'usage « Autre » › type **Entreprise**. Laisser l'app en mode *Développement* : pour lire sa propre page en tant qu'admin, aucune validation Meta n'est nécessaire.
+2. **Obtenir un jeton utilisateur.** Ouvrir l'[explorateur de l'API Graph](https://developers.facebook.com/tools/explorer/), choisir l'app, puis *Generate Access Token* avec les autorisations `pages_show_list`, `pages_read_engagement` et `pages_read_user_content`.
+3. **Le rendre longue durée.** Dans l'[outil de débogage des jetons](https://developers.facebook.com/tools/debug/accesstoken/), coller le jeton puis *Extend Access Token*.
+4. **Récupérer le jeton de la page.** Dans l'explorateur, avec ce jeton longue durée, appeler `me/accounts`. La réponse contient, pour la page de la MAM, son `id` (→ `FACEBOOK_PAGE_ID`) et son `access_token` (→ `FACEBOOK_PAGE_ACCESS_TOKEN`). Ce jeton de page **n'expire pas** tant que le mot de passe et les accès à la page ne changent pas.
+5. **Ajouter les variables dans Vercel** (*Settings › Environment Variables*) : `FACEBOOK_PAGE_ID`, `FACEBOOK_PAGE_ACCESS_TOKEN` et `CRON_SECRET` (une longue chaîne aléatoire, voir `.env.example`). Redéployer.
+6. **Mettre à jour la base** : dans `/admin`, cliquer de nouveau sur **« Initialiser la base »** pour créer la table `facebook_imports`.
+7. Publier un post test avec `#site`, puis **« Récupérer maintenant »**.
+
+Si Facebook refuse un jour l'accès (mot de passe changé, accès retiré…), le bouton l'indique clairement : il suffit de refaire les étapes 2 à 5.
+
+---
+
 ## Commandes
 
 ```bash
 npm run dev               # serveur de développement
 npm run build             # build de production
-npm test                  # 102 tests unitaires
+npm test                  # 153 tests unitaires
 npm run test:watch        # tests en continu
 npm run hash:password     # génère ADMIN_PASSWORD_HASH et SESSION_SECRET
 npm run legacy:manifest    # régénère data/legacy-photos.json depuis public/img

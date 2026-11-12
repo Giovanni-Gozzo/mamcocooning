@@ -23,4 +23,14 @@ export const SCHEMA_STATEMENTS: readonly string[] = [
    )`,
   `create index if not exists photos_category_idx on photos (category_slug, created_at desc)`,
   `create index if not exists photos_published_idx on photos (is_published, created_at desc)`,
+  // Ledger of every Facebook image ever imported. It outlives the photo row, so
+  // a picture Sigrid takes off the site is never pulled back in by the next sync.
+  // photo_id stays null while an import is in progress or after it failed;
+  // attempts caps retries so a broken picture is not re-processed forever.
+  `create table if not exists facebook_imports (
+     external_id text primary key,
+     photo_id    text,
+     attempts    integer not null default 1,
+     imported_at timestamptz not null default now()
+   )`,
 ]
